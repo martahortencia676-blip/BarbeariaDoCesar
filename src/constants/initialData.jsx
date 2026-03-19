@@ -38,7 +38,7 @@ export const initialServices = [
     { id: 's25', name: 'Combo Degradê: Corte degradê, sobrancelha + barba lisa ou desenhada', price: 50, duration: 60, type: 'service', commissionable: true },
     { id: 's26', name: 'Combo Navalhado: Corte navalhado, sobrancelha + barba lisa ou desenhada', price: 55, duration: 60, type: 'service', commissionable: true },
     // Obs: combos não incluem barbas italianas, degradês e sobrancelhas na pinça
-  { id: 's5', name: 'Pacote Completo (Corte + Barba)', price: 70, cost: 7, duration: 50, type: 'service', commissionable: true },
+  { id: 's27', name: 'Pacote Completo (Corte + Barba)', price: 70, cost: 7, duration: 50, type: 'service', commissionable: true },
 ];
 
 export const initialProducts = [

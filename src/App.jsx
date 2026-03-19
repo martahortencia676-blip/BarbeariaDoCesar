@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { initialBarbers, initialServices, initialProducts, initialCustomers, paymentMethods } from './constants/initialData.jsx';
 import { useFirestoreCollection, useFirestoreSetting } from './hooks/useFirestore';
 import Sidebar from './components/Sidebar';
-import CoverScreen from './components/CoverScreen';
 import DashboardView from './pages/DashboardView';
 import AgendaView from './pages/AgendaView';
 import POSView from './pages/POSView';
@@ -15,17 +14,44 @@ import RodrigoPage from './pages/RodrigoPage';
 import LoginScreen from './components/LoginScreen.jsx';
 import { Menu, X } from 'lucide-react';
 
+const SESSION_KEY = 'barbearia_session';
+const SESSION_DURATION = 5 * 60 * 1000; // 5 minutos
+
+function isSessionValid() {
+  const session = sessionStorage.getItem(SESSION_KEY);
+  if (!session) return false;
+  const loginTime = parseInt(session, 10);
+  return Date.now() - loginTime < SESSION_DURATION;
+}
+
 export default function App() {
   // --- ESTADOS DO SISTEMA ---
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(isSessionValid);
   const [password, setPassword, passwordLoaded] = useFirestoreSetting('password', 'Bcesar@26');
   const [hideValues, setHideValues] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const [newPasswordInput, setNewPasswordInput] = useState('');
-  const [passwordMsg, setPasswordMsg] = useState('');
-  const [showCover, setShowCover] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [passwordMsg, setPasswordMsg] = useState('');
+
+  // Auto-logout após 5 minutos
+  useEffect(() => {
+    if (!loggedIn) return;
+    const checkSession = () => {
+      if (!isSessionValid()) {
+        setLoggedIn(false);
+        sessionStorage.removeItem(SESSION_KEY);
+      }
+    };
+    const interval = setInterval(checkSession, 10000); // checa a cada 10s
+    return () => clearInterval(interval);
+  }, [loggedIn]);
+
+  const handleLogin = () => {
+    sessionStorage.setItem(SESSION_KEY, String(Date.now()));
+    setLoggedIn(true);
+  };
   
   // Bancos de dados editáveis (sincronizados com Firebase)
   const [barbers] = useState(initialBarbers);
@@ -51,10 +77,7 @@ export default function App() {
 
   // --- TELA DE LOGIN ---
   if (!loggedIn) {
-    return <LoginScreen onLogin={() => setLoggedIn(true)} currentPassword={password} />;
-  }
-  if (showCover) {
-    return <CoverScreen onEnter={() => setShowCover(false)} />;
+    return <LoginScreen onLogin={handleLogin} currentPassword={password} />;
   }
 
   if (!dataLoaded) {
