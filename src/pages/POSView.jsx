@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Scissors, Beer, Check, Award, Trash2, Search } from 'lucide-react';
+import { ShoppingCart, Scissors, Beer, Check, Award, Trash2, Search, X } from 'lucide-react';
 import { generateId, getCustomer } from '../utils/helpers';
 import CheckoutModal from '../components/CheckoutModal';
 
@@ -27,6 +27,7 @@ export default function POSView({
   const [selectedCouponId, setSelectedCouponId] = useState('');
   const [serviceSearch, setServiceSearch] = useState('');
   const [productSearch, setProductSearch] = useState('');
+  const [showComanda, setShowComanda] = useState(false);
 
   const activeClients = appointments.filter(a => a.status === 'in-service');
   const currentAppt = activeClients.find(a => a.id === selectedApptId);
@@ -166,12 +167,25 @@ export default function POSView({
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-zinc-100">
-      <div className="flex-1 p-6 overflow-y-auto">
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] overflow-hidden bg-zinc-100 relative">
+      {/* Botão flutuante para abrir comanda no mobile */}
+      <button
+        onClick={() => setShowComanda(true)}
+        className="lg:hidden fixed bottom-4 right-4 z-30 bg-black text-white p-4 rounded-full shadow-lg flex items-center gap-2"
+      >
+        <ShoppingCart className="w-5 h-5" />
+        {currentTab.items.length > 0 && (
+          <span className="bg-white text-black text-xs font-black rounded-full w-5 h-5 flex items-center justify-center">
+            {currentTab.items.length}
+          </span>
+        )}
+      </button>
+
+      <div className="flex-1 p-4 md:p-6 overflow-y-auto pb-24 lg:pb-6">
         
-        <div className="mb-6 bg-white p-4 rounded-xl shadow-sm border border-zinc-300">
-          <label className="block text-sm font-bold text-black mb-3 uppercase tracking-wider">Profissional Adicional (Extras)</label>
-          <div className="flex gap-3">
+        <div className="mb-6 bg-white p-3 md:p-4 rounded-xl shadow-sm border border-zinc-300">
+          <label className="block text-xs md:text-sm font-bold text-black mb-3 uppercase tracking-wider">Profissional Adicional (Extras)</label>
+          <div className="flex flex-wrap gap-2 md:gap-3">
             {barbers.map(b => (
               <button
                 key={b.id}
@@ -257,10 +271,20 @@ export default function POSView({
         </div>
       </div>
 
+      {/* Overlay mobile */}
+      {showComanda && (
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setShowComanda(false)} />
+      )}
+
       {/* Sidebar da Comanda */}
-      <div className="w-96 bg-white border-l-2 border-zinc-300 flex flex-col z-10">
+      <div className={`fixed inset-y-0 right-0 w-full sm:w-96 z-50 lg:static lg:w-96 lg:z-10 bg-white border-l-2 border-zinc-300 flex flex-col transform transition-transform duration-200 lg:translate-x-0 ${showComanda ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="p-4 border-b border-zinc-800 bg-black text-white">
-          <h2 className="text-lg font-black flex items-center gap-2 uppercase tracking-wider"><ShoppingCart className="w-5 h-5" /> Comanda</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-black flex items-center gap-2 uppercase tracking-wider"><ShoppingCart className="w-5 h-5" /> Comanda</h2>
+            <button onClick={() => setShowComanda(false)} className="lg:hidden text-white p-1">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
           
           <div className="mt-4">
             <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wider font-bold">Cliente em Atendimento</label>

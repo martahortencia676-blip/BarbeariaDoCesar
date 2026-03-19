@@ -6,7 +6,7 @@ export default function CoverScreen({ onEnter }) {
       <div className="max-w-md w-full flex flex-col items-center animate-fade-in">
         <div className="w-64 h-64 md:w-80 md:h-80 rounded-full overflow-hidden border-4 border-zinc-800 shadow-2xl mb-8 flex items-center justify-center bg-black">
           <img 
-            src="/Barbearia%20do%20Cesar%20LOGO.jpg" 
+            src={`${import.meta.env.BASE_URL}Barbearia%20do%20Cesar%20LOGO.jpg`}
             alt="Barbearia do César" 
             className="w-full h-full object-cover scale-110"
             onError={(e) => { 

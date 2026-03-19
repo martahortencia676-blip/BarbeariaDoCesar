@@ -13,6 +13,7 @@ import CouponsView from './pages/CouponsView';
 import PerformanceView from './pages/PerformanceView';
 import RodrigoPage from './pages/RodrigoPage';
 import LoginScreen from './components/LoginScreen.jsx';
+import { Menu, X } from 'lucide-react';
 
 export default function App() {
   // --- ESTADOS DO SISTEMA ---
@@ -24,6 +25,7 @@ export default function App() {
   const [passwordMsg, setPasswordMsg] = useState('');
   const [showCover, setShowCover] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Bancos de dados editáveis (sincronizados com Firebase)
   const [barbers] = useState(initialBarbers);
@@ -49,16 +51,6 @@ export default function App() {
 
   // --- TELA DE LOGIN ---
   if (!loggedIn) {
-    if (!passwordLoaded) {
-      return (
-        <div className="flex items-center justify-center h-screen bg-black">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-white font-bold uppercase tracking-wider text-sm">Carregando...</p>
-          </div>
-        </div>
-      );
-    }
     return <LoginScreen onLogin={() => setLoggedIn(true)} currentPassword={password} />;
   }
   if (showCover) {
@@ -69,32 +61,54 @@ export default function App() {
     return (
       <div className="flex items-center justify-center h-screen bg-black">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white font-bold uppercase tracking-wider text-sm">Carregando dados...</p>
+          <div className="w-10 h-10 border-3 border-white border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-white font-bold uppercase tracking-wider text-xs">Carregando...</p>
         </div>
       </div>
     );
   }
 
   // --- RENDERIZAÇÃO PRINCIPAL DO SISTEMA ---
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSidebarOpen(false);
+  };
+
   return (
     <div className="flex h-screen bg-zinc-100 font-sans text-black">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} lowStockCount={lowStockCount} />
+      {/* Overlay mobile */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
 
-      <main className="flex-1 overflow-auto bg-zinc-100">
-        <div className="flex flex-wrap justify-end items-center p-4 gap-2">
+      {/* Sidebar */}
+      <div className={`fixed md:static inset-y-0 left-0 z-40 transform transition-transform duration-200 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} lowStockCount={lowStockCount} />
+      </div>
+
+      <main className="flex-1 overflow-auto bg-zinc-100 min-w-0">
+        {/* Top bar */}
+        <div className="flex flex-wrap items-center p-3 md:p-4 gap-2">
           <button
-            onClick={() => setHideValues(v => !v)}
-            className="bg-zinc-200 hover:bg-zinc-300 text-black font-bold py-2 px-4 rounded-lg text-xs uppercase tracking-wider"
+            onClick={() => setSidebarOpen(v => !v)}
+            className="md:hidden bg-black text-white p-2 rounded-lg mr-auto"
           >
-            {hideValues ? 'Mostrar valores' : 'Ocultar valores'}
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
-          <button
-            onClick={() => setShowChangePassword(v => !v)}
-            className="bg-zinc-200 hover:bg-zinc-300 text-black font-bold py-2 px-4 rounded-lg text-xs uppercase tracking-wider"
-          >
-            Alterar senha
-          </button>
+          <div className="flex flex-wrap items-center gap-2 ml-auto">
+            <button
+              onClick={() => setHideValues(v => !v)}
+              className="bg-zinc-200 hover:bg-zinc-300 text-black font-bold py-2 px-3 md:px-4 rounded-lg text-xs uppercase tracking-wider"
+            >
+              {hideValues ? 'Mostrar' : 'Ocultar'}
+            </button>
+            <button
+              onClick={() => setShowChangePassword(v => !v)}
+              className="bg-zinc-200 hover:bg-zinc-300 text-black font-bold py-2 px-3 md:px-4 rounded-lg text-xs uppercase tracking-wider"
+            >
+              Alterar senha
+            </button>
+          </div>
           {showChangePassword && (
             <div className="w-full flex flex-wrap items-center gap-2 mt-2">
               <input

@@ -70,13 +70,12 @@ export function useFirestoreCollection(collectionName, initialData = []) {
   const [data, setDataLocal] = useState(initialData);
   const [loaded, setLoaded] = useState(false);
   const isFirstLoad = useRef(true);
-  const skipNextSync = useRef(false);
+  const isFromFirestore = useRef(false);
 
   // Escutar mudanças no Firestore em tempo real
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, collectionName), (snapshot) => {
       if (snapshot.empty && isFirstLoad.current) {
-        // Coleção vazia no Firebase — usar dados iniciais e fazer upload
         if (initialData.length > 0) {
           const batch = writeBatch(db);
           initialData.forEach(item => {
@@ -92,7 +91,7 @@ export function useFirestoreCollection(collectionName, initialData = []) {
 
       isFirstLoad.current = false;
       const docs = snapshot.docs.map(d => fromFirestore({ ...d.data(), id: d.id }));
-      skipNextSync.current = true;
+      isFromFirestore.current = true;
       setDataLocal(docs);
       setLoaded(true);
     });
@@ -100,17 +99,12 @@ export function useFirestoreCollection(collectionName, initialData = []) {
     return () => unsubscribe();
   }, [collectionName]);
 
-  // Função para atualizar dados — salva no Firestore automaticamente
+  // Função para atualizar dados — sempre salva no Firestore
   const setData = useCallback((newDataOrFn) => {
     setDataLocal(prev => {
       const newData = typeof newDataOrFn === 'function' ? newDataOrFn(prev) : newDataOrFn;
-
-      // Sync com Firestore
-      if (!skipNextSync.current) {
-        syncToFirestore(collectionName, prev, newData);
-      }
-      skipNextSync.current = false;
-
+      // Sempre sincronizar alterações do usuário com o Firestore
+      syncToFirestore(collectionName, prev, newData);
       return newData;
     });
   }, [collectionName]);

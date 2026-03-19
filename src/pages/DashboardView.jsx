@@ -135,26 +135,26 @@ export default function DashboardView({
   const mask = v => hideValues ? '****' : v;
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-black mb-6 text-black uppercase tracking-wider border-b-2 border-black pb-2">Dashboard</h2>
+    <div className="p-3 md:p-6">
+      <h2 className="text-xl md:text-2xl font-black mb-4 md:mb-6 text-black uppercase tracking-wider border-b-2 border-black pb-2">Dashboard</h2>
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-black text-white p-6 rounded-xl shadow-lg">
-          <p className="text-zinc-400 font-bold text-xs mb-1 uppercase tracking-wider">Receita Total</p>
-          <div className="text-3xl font-black">R$ {mask(totalRevenue.toFixed(2))}</div>
-          <p className="text-zinc-500 text-xs mt-2 font-medium">{mask(totalTransactions)}</p>
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
+        <div className="bg-black text-white p-4 md:p-6 rounded-xl shadow-lg">
+          <p className="text-zinc-400 font-bold text-[10px] md:text-xs mb-1 uppercase tracking-wider">Receita Total</p>
+          <div className="text-xl md:text-3xl font-black">R$ {mask(totalRevenue.toFixed(2))}</div>
+          <p className="text-zinc-500 text-[10px] md:text-xs mt-1 md:mt-2 font-medium">{mask(totalTransactions)}</p>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-zinc-300">
-          <p className="text-zinc-500 font-bold text-xs mb-1 uppercase tracking-wider">Clientes</p>
-          <div className="text-3xl font-black text-black">{customers.length}</div>
-          <p className="text-zinc-600 text-xs mt-2 font-medium">Cadastrados no total</p>
+        <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-zinc-300">
+          <p className="text-zinc-500 font-bold text-[10px] md:text-xs mb-1 uppercase tracking-wider">Clientes</p>
+          <div className="text-xl md:text-3xl font-black text-black">{customers.length}</div>
+          <p className="text-zinc-600 text-[10px] md:text-xs mt-1 md:mt-2 font-medium">Cadastrados no total</p>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-zinc-300">
-          <p className="text-zinc-500 font-bold text-xs mb-1 uppercase tracking-wider">Visitas Mês</p>
-          <div className="text-3xl font-black text-black">
+        <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-zinc-300">
+          <p className="text-zinc-500 font-bold text-[10px] md:text-xs mb-1 uppercase tracking-wider">Visitas Mês</p>
+          <div className="text-xl md:text-3xl font-black text-black">
             {mask(customers.reduce((acc, c) => {
               const monthCuts = transactions.filter(t => 
                 t.customerId === c.id && 
@@ -166,13 +166,13 @@ export default function DashboardView({
           <p className="text-zinc-600 text-xs mt-2 font-medium">Neste mês</p>
         </div>
 
-        <div className={`p-6 rounded-xl shadow-sm border-2 ${
+        <div className={`p-4 md:p-6 rounded-xl shadow-sm border-2 ${
           lowStockProducts.length > 0 
             ? 'bg-red-50 border-red-300' 
             : 'bg-white border-zinc-300'
         }`}>
-          <p className="text-zinc-500 font-bold text-xs mb-1 uppercase tracking-wider">Estoque Baixo</p>
-          <div className={`text-3xl font-black ${lowStockProducts.length > 0 ? 'text-red-600' : 'text-black'}`}>
+          <p className="text-zinc-500 font-bold text-[10px] md:text-xs mb-1 uppercase tracking-wider">Estoque Baixo</p>
+          <div className={`text-xl md:text-3xl font-black ${lowStockProducts.length > 0 ? 'text-red-600' : 'text-black'}`}>
             {mask(lowStockProducts.length)}
           </div>
           <p className="text-zinc-600 text-xs mt-2 font-medium">Produtos</p>
@@ -185,9 +185,9 @@ export default function DashboardView({
           <TrendingUp className="w-6 h-6" /> Análise de Sazonalidade - Movimento
         </h3>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
           {/* Gráfico Diário */}
-          <div className="bg-white p-6 rounded-xl border border-zinc-300 shadow-sm">
+          <div className="bg-white p-3 md:p-6 rounded-xl border border-zinc-300 shadow-sm">
             <h4 className="font-black text-black mb-4 uppercase text-sm tracking-wider">Últimos 30 Dias</h4>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={dailyData}>
@@ -203,7 +203,7 @@ export default function DashboardView({
           </div>
 
           {/* Gráfico Semanal */}
-          <div className="bg-white p-6 rounded-xl border border-zinc-300 shadow-sm">
+          <div className="bg-white p-3 md:p-6 rounded-xl border border-zinc-300 shadow-sm">
             <h4 className="font-black text-black mb-4 uppercase text-sm tracking-wider">Últimas 12 Semanas</h4>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={weeklyData}>
@@ -219,7 +219,7 @@ export default function DashboardView({
           </div>
 
           {/* Gráfico Mensal */}
-          <div className="bg-white p-6 rounded-xl border border-zinc-300 shadow-sm">
+          <div className="bg-white p-3 md:p-6 rounded-xl border border-zinc-300 shadow-sm">
             <h4 className="font-black text-black mb-4 uppercase text-sm tracking-wider">Últimos 12 Meses</h4>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={monthlyData}>
@@ -237,11 +237,11 @@ export default function DashboardView({
       </div>
 
       {/* Aniversários + Análises */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8 mb-6 md:mb-8">
         <BirthdayReminders customers={customers} />
 
         {/* Top Clientes */}
-        <div className="bg-white p-6 rounded-xl border border-zinc-300 shadow-sm">
+        <div className="bg-white p-3 md:p-6 rounded-xl border border-zinc-300 shadow-sm">
           <h3 className="font-black text-black mb-4 uppercase text-sm tracking-wider flex items-center gap-2">
             <Users className="w-5 h-5" /> Clientes Frequentes
           </h3>
@@ -260,9 +260,9 @@ export default function DashboardView({
       </div>
 
       {/* Análises Detalhadas */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
         {/* Top Serviços */}
-        <div className="bg-white p-6 rounded-xl border border-zinc-300 shadow-sm">
+        <div className="bg-white p-3 md:p-6 rounded-xl border border-zinc-300 shadow-sm">
           <h3 className="font-black text-black mb-4 uppercase text-sm tracking-wider flex items-center gap-2">
             <TrendingUp className="w-5 h-5" /> Serviços Populares
           </h3>
@@ -281,7 +281,7 @@ export default function DashboardView({
         </div>
 
         {/* Top Produtos */}
-        <div className="bg-white p-6 rounded-xl border border-zinc-300 shadow-sm">
+        <div className="bg-white p-3 md:p-6 rounded-xl border border-zinc-300 shadow-sm">
           <h3 className="font-black text-black mb-4 uppercase text-sm tracking-wider flex items-center gap-2">
             <BarChart3 className="w-5 h-5" /> Produtos Vendidos
           </h3>
@@ -300,7 +300,7 @@ export default function DashboardView({
         </div>
 
         {/* Performance Barbeiros */}
-        <div className="bg-white p-6 rounded-xl border border-zinc-300 shadow-sm">
+        <div className="bg-white p-3 md:p-6 rounded-xl border border-zinc-300 shadow-sm">
           <h3 className="font-black text-black mb-4 uppercase text-sm tracking-wider">Produção</h3>
           <div className="space-y-2">
             {barberPerformance.map(barber => (

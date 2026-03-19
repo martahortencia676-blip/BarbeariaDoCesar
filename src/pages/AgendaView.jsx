@@ -200,10 +200,10 @@ export default function AgendaView({
   const todaysAppointments = appointments.filter(a => a.date === today && a.status !== 'completed');
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-black mb-6 text-black uppercase tracking-wider border-b-2 border-black pb-2">Agenda de Horários</h2>
+    <div className="p-3 md:p-6">
+      <h2 className="text-xl md:text-2xl font-black mb-4 md:mb-6 text-black uppercase tracking-wider border-b-2 border-black pb-2">Agenda de Horários</h2>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
         {/* Lado Esquerdo: Formulários */}
         <div className="lg:col-span-1">
           <h3 className="text-lg font-black text-black mb-4 uppercase tracking-wide flex items-center gap-2"><Plus className="w-5 h-5"/> Novo Agendamento</h3>

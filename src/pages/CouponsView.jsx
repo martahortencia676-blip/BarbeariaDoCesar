@@ -47,12 +47,12 @@ export default function CouponsView({
   const activeCoupons = coupons.filter(c => !c.used);
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <h2 className="text-2xl font-black mb-6 text-black uppercase tracking-wider border-b-2 border-black pb-2 flex items-center gap-2">
+    <div className="p-3 md:p-6 max-w-6xl mx-auto">
+      <h2 className="text-xl md:text-2xl font-black mb-4 md:mb-6 text-black uppercase tracking-wider border-b-2 border-black pb-2 flex items-center gap-2">
         <Ticket className="w-6 h-6" /> Cupons Personalizados
       </h2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
         {/* Criar Cupom */}
         <div>
           <h3 className="text-lg font-black mb-4 text-black uppercase flex items-center gap-2">

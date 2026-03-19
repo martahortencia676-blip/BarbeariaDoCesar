@@ -83,10 +83,10 @@ export default function ClientsView({
   const isBirthday = selectedClient && isBirthdayToday(selectedClient.birthDate);
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-black mb-6 text-black uppercase tracking-wider border-b-2 border-black pb-2">Gestão de Clientes</h2>
+    <div className="p-3 md:p-6">
+      <h2 className="text-xl md:text-2xl font-black mb-4 md:mb-6 text-black uppercase tracking-wider border-b-2 border-black pb-2">Gestão de Clientes</h2>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
         {/* Lista de Clientes */}
         <div className="lg:col-span-1">
           <div className="flex justify-between items-center mb-4">
