@@ -358,6 +358,7 @@ export default function App() {
         
         {activeTab === 'settings' && (
           <SettingsView
+            barbers={barbers}
             services={services}
             setServices={setServices}
             products={products}
@@ -372,6 +373,7 @@ export default function App() {
             setCoupons={setCoupons}
             manualTransactions={manualTransactions}
             setManualTransactions={setManualTransactions}
+            standbyList={standbyList}
           />
         )}
       </main>
