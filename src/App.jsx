@@ -16,7 +16,7 @@ import CesarPage from './pages/CesarPage';
 import TransactionHistoryView from './pages/TransactionHistoryView';
 import LoginLogsView from './pages/LoginLogsView';
 import LoginScreen from './components/LoginScreen.jsx';
-import { Menu, X, LogOut } from 'lucide-react';
+import { Menu, X, LogOut, Moon, Sun } from 'lucide-react';
 
 const SESSION_KEY = 'barbearia_session';
 const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 min de inatividade
@@ -36,6 +36,11 @@ export default function App() {
   const [loggedIn, setLoggedIn] = useState(() => !!getSession());
   const [userRole, setUserRole] = useState(() => getSession()?.role || null);
   const [password, setPassword, passwordLoaded] = useFirestoreSetting('password', 'Bcesar@26');
+  const [recoveryEmail, setRecoveryEmail, recoveryEmailLoaded] = useFirestoreSetting('recoveryEmail', '');
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = sessionStorage.getItem('barbearia_darkMode');
+    return saved === 'true';
+  });
   const [hideValues, setHideValues] = useState(() => {
     const saved = sessionStorage.getItem('barbearia_hideValues');
     return saved === 'true';
@@ -45,6 +50,12 @@ export default function App() {
   useEffect(() => {
     sessionStorage.setItem('barbearia_hideValues', String(hideValues));
   }, [hideValues]);
+
+  // Persistir dark mode
+  useEffect(() => {
+    sessionStorage.setItem('barbearia_darkMode', String(darkMode));
+    document.documentElement.classList.toggle('dark', darkMode);
+  }, [darkMode]);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [activeTab, setActiveTab] = useState(() => {
     const saved = sessionStorage.getItem('barbearia_activeTab');
@@ -114,7 +125,7 @@ export default function App() {
   };
   
   // Bancos de dados editáveis (sincronizados com Firebase)
-  const [barbers] = useState(initialBarbers);
+  const [barbers, setBarbers, barbersLoaded] = useFirestoreCollection('barbers', initialBarbers);
   const [services, setServices, servicesLoaded] = useFirestoreCollection('services', initialServices);
   const [products, setProducts, productsLoaded] = useFirestoreCollection('products', initialProducts);
   const [customers, setCustomers, customersLoaded] = useFirestoreCollection('customers', initialCustomers);
@@ -134,13 +145,13 @@ export default function App() {
   // Login Logs (sincronizado com Firebase)
   const [loginLogs, setLoginLogs, loginLogsLoaded] = useFirestoreCollection('loginLogs', []);
 
-  const dataLoaded = servicesLoaded && productsLoaded && customersLoaded && transactionsLoaded && passwordLoaded;
+  const dataLoaded = servicesLoaded && productsLoaded && customersLoaded && transactionsLoaded && passwordLoaded && barbersLoaded;
 
   const lowStockCount = products.filter(p => p.stock <= p.minStock).length;
 
   // --- TELA DE LOGIN ---
   if (!loggedIn) {
-    return <LoginScreen onLogin={handleLogin} cesarPassword={password} rodrigoPassword="Rodrigo10B26" />;
+    return <LoginScreen onLogin={handleLogin} cesarPassword={password} rodrigoPassword="Rodrigo10B26" recoveryEmail={recoveryEmail} setRecoveryPassword={setPassword} />;
   }
 
   if (!dataLoaded) {
@@ -164,7 +175,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen bg-zinc-100 font-sans text-black">
+    <div className={`flex h-screen font-sans ${darkMode ? 'dark bg-zinc-900 text-zinc-100' : 'bg-zinc-100 text-black'}`}>
       {/* Overlay mobile */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />
@@ -175,7 +186,7 @@ export default function App() {
         <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} lowStockCount={lowStockCount} userRole={userRole} onLogout={() => { setLoginLogs(prev => [...prev, { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), role: userRole, action: 'logout', timestamp: new Date() }]); sessionStorage.removeItem(SESSION_KEY); setLoggedIn(false); setUserRole(null); }} />
       </div>
 
-      <main className="flex-1 overflow-auto bg-zinc-100 min-w-0">
+      <main className={`flex-1 overflow-auto min-w-0 ${darkMode ? 'bg-zinc-900' : 'bg-zinc-100'}`}>
         {/* Top bar */}
         <div className="flex flex-wrap items-center p-3 md:p-4 gap-2">
           <button
@@ -186,6 +197,13 @@ export default function App() {
           </button>
           <div className="flex flex-wrap items-center gap-2 ml-auto">
             <button
+              onClick={() => setDarkMode(v => !v)}
+              className={`font-bold py-2 px-3 md:px-4 rounded-lg text-xs uppercase tracking-wider flex items-center gap-1 ${darkMode ? 'bg-zinc-700 hover:bg-zinc-600 text-yellow-400' : 'bg-zinc-200 hover:bg-zinc-300 text-black'}`}
+              title={darkMode ? 'Modo Claro' : 'Modo Escuro'}
+            >
+              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+            <button
               onClick={() => { setLoginLogs(prev => [...prev, { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), role: userRole, action: 'logout', timestamp: new Date() }]); sessionStorage.removeItem(SESSION_KEY); setLoggedIn(false); setUserRole(null); }}
               className="bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2 px-3 md:px-4 rounded-lg text-xs uppercase tracking-wider flex items-center gap-1"
             >
@@ -195,13 +213,13 @@ export default function App() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setHideValues(v => !v)}
-              className="bg-zinc-200 hover:bg-zinc-300 text-black font-bold py-2 px-3 md:px-4 rounded-lg text-xs uppercase tracking-wider"
+              className={`font-bold py-2 px-3 md:px-4 rounded-lg text-xs uppercase tracking-wider ${darkMode ? 'bg-zinc-700 hover:bg-zinc-600 text-zinc-200' : 'bg-zinc-200 hover:bg-zinc-300 text-black'}`}
             >
               {hideValues ? 'Mostrar' : 'Ocultar'}
             </button>
             <button
               onClick={() => setShowChangePassword(v => !v)}
-              className="bg-zinc-200 hover:bg-zinc-300 text-black font-bold py-2 px-3 md:px-4 rounded-lg text-xs uppercase tracking-wider"
+              className={`font-bold py-2 px-3 md:px-4 rounded-lg text-xs uppercase tracking-wider ${darkMode ? 'bg-zinc-700 hover:bg-zinc-600 text-zinc-200' : 'bg-zinc-200 hover:bg-zinc-300 text-black'}`}
             >
               Alterar senha
             </button>
@@ -359,6 +377,7 @@ export default function App() {
         {activeTab === 'settings' && (
           <SettingsView
             barbers={barbers}
+            setBarbers={setBarbers}
             services={services}
             setServices={setServices}
             products={products}
@@ -374,6 +393,9 @@ export default function App() {
             manualTransactions={manualTransactions}
             setManualTransactions={setManualTransactions}
             standbyList={standbyList}
+            recoveryEmail={recoveryEmail}
+            setRecoveryEmail={setRecoveryEmail}
+            darkMode={darkMode}
           />
         )}
       </main>

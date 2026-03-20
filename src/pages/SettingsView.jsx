@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Scissors, Beer, Trash2, Cloud, Search } from 'lucide-react';
+import { Scissors, Beer, Trash2, Cloud, Search, UserPlus, Users, Mail } from 'lucide-react';
 import { toast } from '../components/Toast';
 import { generateId } from '../utils/helpers';
 
 export default function SettingsView({
   barbers,
+  setBarbers,
   services,
   setServices,
   products,
@@ -19,7 +20,10 @@ export default function SettingsView({
   setCoupons,
   manualTransactions,
   setManualTransactions,
-  standbyList
+  standbyList,
+  recoveryEmail,
+  setRecoveryEmail,
+  darkMode
 }) {
   const [sName, setSName] = useState('');
   const [sPrice, setSPrice] = useState('');
@@ -28,6 +32,9 @@ export default function SettingsView({
   const [pPrice, setPPrice] = useState('');
   const [pStock, setPStock] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [bName, setBName] = useState('');
+  const [bCommission, setBCommission] = useState('50');
+  const [emailInput, setEmailInput] = useState('');
 
   const handleAddService = (e) => {
     e.preventDefault();
@@ -250,6 +257,81 @@ export default function SettingsView({
               Exportar Backup (PDF)
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Gerenciar Barbeiros */}
+      <div className="mt-8 mb-8">
+        <h3 className="text-lg font-black mb-6 text-black uppercase tracking-wider flex items-center gap-2">
+          <Users className="w-6 h-6" /> Gerenciar Barbeiros
+        </h3>
+        <div className={`rounded-2xl border shadow-sm p-6 ${darkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-300'}`}>
+          <div className="space-y-3 mb-6">
+            {barbers.map(b => (
+              <div key={b.id} className={`flex justify-between items-center p-4 rounded-xl border ${darkMode ? 'border-zinc-700 bg-zinc-900' : 'border-zinc-200 bg-zinc-50'}`}>
+                <div>
+                  <p className={`font-black text-sm ${darkMode ? 'text-white' : 'text-black'}`}>{b.name} {b.isOwner && <span className="text-xs bg-black text-white px-2 py-0.5 rounded ml-2">DONO</span>}</p>
+                  <p className={`text-xs font-bold mt-1 ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Comissão: {(b.commission * 100).toFixed(0)}%</p>
+                </div>
+                {!b.isOwner && (
+                  <button
+                    onClick={() => {
+                      if (confirm(`Tem certeza que deseja remover ${b.name}? Essa ação não pode ser desfeita.`)) {
+                        setBarbers(barbers.filter(x => x.id !== b.id));
+                        toast(`${b.name} removido`);
+                      }
+                    }}
+                    className="text-zinc-400 hover:text-red-600 transition-colors p-2"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (!bName) return;
+            const comm = parseFloat(bCommission) / 100;
+            if (isNaN(comm) || comm < 0 || comm > 1) { toast('Comissão inválida (0-100%)'); return; }
+            setBarbers([...barbers, { id: 'b' + Date.now(), name: bName.trim(), commission: comm, isOwner: false }]);
+            setBName('');
+            setBCommission('50');
+            toast('Barbeiro adicionado');
+          }} className={`p-4 rounded-xl border flex flex-col gap-3 ${darkMode ? 'border-zinc-700 bg-zinc-900' : 'border-zinc-200'}`}>
+            <div className="flex gap-3">
+              <input type="text" placeholder="Nome do Barbeiro" value={bName} onChange={e => setBName(e.target.value)} className={`flex-1 p-3 border rounded-lg font-bold text-sm outline-none ${darkMode ? 'bg-zinc-800 border-zinc-600 text-white placeholder-zinc-500 focus:border-white' : 'border-zinc-300 focus:border-black'}`} required />
+              <input type="number" placeholder="Comissão %" min="0" max="100" value={bCommission} onChange={e => setBCommission(e.target.value)} className={`w-28 p-3 border rounded-lg font-bold text-sm outline-none ${darkMode ? 'bg-zinc-800 border-zinc-600 text-white placeholder-zinc-500 focus:border-white' : 'border-zinc-300 focus:border-black'}`} />
+            </div>
+            <button type="submit" className="bg-black text-white font-bold py-3 rounded-lg uppercase tracking-wider hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2">
+              <UserPlus className="w-4 h-4" /> Adicionar Barbeiro
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* E-mail de Recuperação */}
+      <div className="mt-8 mb-8">
+        <h3 className="text-lg font-black mb-6 text-black uppercase tracking-wider flex items-center gap-2">
+          <Mail className="w-6 h-6" /> E-mail de Recuperação
+        </h3>
+        <div className={`rounded-2xl border shadow-sm p-6 ${darkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-300'}`}>
+          <div className={`border-l-4 p-4 rounded-lg mb-6 ${darkMode ? 'bg-blue-900/20 border-blue-500' : 'bg-blue-50 border-blue-400'}`}>
+            <p className={`text-sm font-medium ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>Cadastre um e-mail para recuperar sua senha caso esqueça. Na tela de login, clique em "Esqueceu a senha?" e informe este e-mail.</p>
+          </div>
+          {recoveryEmail && (
+            <p className={`text-sm font-bold mb-4 ${darkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>E-mail atual: <span className={`${darkMode ? 'text-white' : 'text-black'}`}>{recoveryEmail}</span></p>
+          )}
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (!emailInput) return;
+            setRecoveryEmail(emailInput.trim());
+            setEmailInput('');
+            toast('E-mail de recuperação salvo!');
+          }} className="flex gap-3">
+            <input type="email" placeholder="seu@email.com" value={emailInput} onChange={e => setEmailInput(e.target.value)} className={`flex-1 p-3 border rounded-lg font-bold text-sm outline-none ${darkMode ? 'bg-zinc-900 border-zinc-600 text-white placeholder-zinc-500 focus:border-white' : 'border-zinc-300 focus:border-black'}`} required />
+            <button type="submit" className="bg-black text-white font-bold py-3 px-6 rounded-lg uppercase tracking-wider hover:bg-zinc-800 transition-colors">Salvar</button>
+          </form>
         </div>
       </div>
 
