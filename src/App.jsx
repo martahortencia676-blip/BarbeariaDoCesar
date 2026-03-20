@@ -122,7 +122,7 @@ export default function App() {
 
       {/* Sidebar */}
       <div className={`fixed md:static inset-y-0 left-0 z-40 transform transition-transform duration-200 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} lowStockCount={lowStockCount} userRole={userRole} />
+        <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} lowStockCount={lowStockCount} userRole={userRole} onLogout={() => { sessionStorage.removeItem(SESSION_KEY); setLoggedIn(false); setUserRole(null); }} />
       </div>
 
       <main className="flex-1 overflow-auto bg-zinc-100 min-w-0">

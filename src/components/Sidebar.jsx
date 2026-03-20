@@ -1,6 +1,6 @@
-import { Calendar, ShoppingCart, BarChart3, Settings, Users, LayoutGrid, Ticket, Award, User } from 'lucide-react';
+import { Calendar, ShoppingCart, BarChart3, Settings, Users, LayoutGrid, Ticket, Award, User, LogOut } from 'lucide-react';
 
-export default function Sidebar({ activeTab, setActiveTab, lowStockCount, userRole }) {
+export default function Sidebar({ activeTab, setActiveTab, lowStockCount, userRole, onLogout }) {
   return (
     <nav className="w-64 md:w-20 lg:w-64 bg-black text-white flex flex-col h-full shadow-xl">
       <div className="p-4 lg:p-6 flex flex-col items-center gap-3 border-b border-zinc-800">
@@ -67,6 +67,12 @@ export default function Sidebar({ activeTab, setActiveTab, lowStockCount, userRo
           <span className="md:hidden lg:block">Ajustes</span>
         </button>
         </>)}
+      </div>
+
+      <div className="p-3 border-t border-zinc-800">
+        <button onClick={onLogout} className="flex items-center gap-3 p-3 rounded-xl font-bold uppercase text-sm tracking-wider transition-colors text-red-400 hover:bg-red-900/30 hover:text-red-300 w-full">
+          <LogOut className="w-5 h-5 shrink-0" /><span className="md:hidden lg:block">Sair</span>
+        </button>
       </div>
     </nav>
   );
