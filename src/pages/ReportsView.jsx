@@ -308,7 +308,7 @@ export default function ReportsView({
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={`font-black text-sm whitespace-nowrap ${t.type === 'in' ? 'text-green-600' : 'text-red-600'}`}>
-                        {t.type === 'in' ? '+' : '-'} R$ {t.amount.toFixed(2)}
+                        {t.type === 'in' ? '+' : '-'} {mask(`R$ ${t.amount.toFixed(2)}`)}
                       </span>
                       <button onClick={() => { setManualTransactions(manualTransactions.filter(x => x.id !== t.id)); toast('Registro removido'); }} className="text-zinc-400 hover:text-red-600 transition-colors shrink-0">
                         <Trash2 className="w-4 h-4" />
@@ -347,8 +347,8 @@ export default function ReportsView({
                       <span className="bg-zinc-100 text-black px-3 py-1 rounded-lg text-xs font-black">{(barber.commission * 100).toFixed(0)}%</span>
                     )}
                   </td>
-                  <td className="p-4 text-right font-bold text-zinc-600">R$ {barber.totalServices.toFixed(2)}</td>
-                  <td className="p-4 text-right font-black text-black">R$ {barber.commissionEarned.toFixed(2)}</td>
+                  <td className="p-4 text-right font-bold text-zinc-600">{mask(`R$ ${barber.totalServices.toFixed(2)}`)}</td>
+                  <td className="p-4 text-right font-black text-black">{mask(`R$ ${barber.commissionEarned.toFixed(2)}`)}</td>
                 </tr>
               ))}
             </tbody>
@@ -380,8 +380,8 @@ export default function ReportsView({
                     <tr key={service.id} className="hover:bg-zinc-50 transition-colors">
                       <td className="p-3 font-bold text-black text-left">{service.name}</td>
                       <td className="p-3 text-center font-bold text-zinc-600">{service.totalSold}</td>
-                      <td className="p-3 text-right font-bold text-zinc-600 whitespace-nowrap">R$ {service.totalRevenue.toFixed(2)}</td>
-                      <td className="p-3 text-right font-black text-black whitespace-nowrap">R$ {service.profit.toFixed(2)}</td>
+                      <td className="p-3 text-right font-bold text-zinc-600 whitespace-nowrap">{mask(`R$ ${service.totalRevenue.toFixed(2)}`)}</td>
+                      <td className="p-3 text-right font-black text-black whitespace-nowrap">{mask(`R$ ${service.profit.toFixed(2)}`)}</td>
                       <td className="p-3 text-right font-black text-green-600">{service.margin.toFixed(1)}%</td>
                     </tr>
                   ))}

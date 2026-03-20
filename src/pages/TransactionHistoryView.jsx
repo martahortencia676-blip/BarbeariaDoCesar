@@ -4,11 +4,13 @@ import { toast } from '../components/Toast';
 
 const PAYMENT_LABELS = { pix: 'PIX', credit: 'Cartão de Crédito', debit: 'Cartão de Débito', cash: 'Dinheiro' };
 
-export default function TransactionHistoryView({ transactions, setTransactions, customers, barbers, userRole }) {
+export default function TransactionHistoryView({ transactions, setTransactions, customers, barbers, userRole, hideValues = false }) {
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editPayment, setEditPayment] = useState('');
   const [editItems, setEditItems] = useState([]);
+
+  const mask = v => hideValues ? '****' : v;
 
   const getCustomerName = (t) => t.customerName || customers.find(c => c.id === t.customerId)?.name || 'Cliente avulso';
   const getBarberName = (barberId) => barbers.find(b => b.id === barberId)?.name || '—';
@@ -79,7 +81,7 @@ export default function TransactionHistoryView({ transactions, setTransactions, 
           </div>
           <div className="bg-white p-4 rounded-xl border border-zinc-200">
             <p className="text-zinc-500 font-bold text-xs uppercase tracking-widest mb-1">Faturamento Total</p>
-            <p className="text-2xl font-black text-black">R$ {transactions.reduce((a, t) => a + t.total, 0).toFixed(2)}</p>
+            <p className="text-2xl font-black text-black">{mask(`R$ ${transactions.reduce((a, t) => a + t.total, 0).toFixed(2)}`)}</p>
           </div>
           <div className="bg-white p-4 rounded-xl border border-zinc-200 col-span-2 md:col-span-1">
             <p className="text-zinc-500 font-bold text-xs uppercase tracking-widest mb-1">Exibindo</p>
@@ -124,7 +126,7 @@ export default function TransactionHistoryView({ transactions, setTransactions, 
                       ) : (
                         <>
                           <span className="bg-zinc-200 text-zinc-700 font-bold text-xs px-3 py-1 rounded-lg uppercase">{PAYMENT_LABELS[t.paymentMethod] || t.paymentMethod}</span>
-                          <span className="font-black text-black text-lg">R$ {t.total.toFixed(2)}</span>
+                          <span className="font-black text-black text-lg">{mask(`R$ ${t.total.toFixed(2)}`)}</span>
                           <button onClick={() => startEdit(t)} className="text-zinc-400 hover:text-blue-600 transition-colors" title="Editar"><Pencil className="w-5 h-5" /></button>
                           {userRole === 'cesar' && (
                             <button onClick={() => handleDelete(t.id)} className="text-zinc-400 hover:text-red-600 transition-colors" title="Excluir"><Trash2 className="w-5 h-5" /></button>
@@ -160,7 +162,7 @@ export default function TransactionHistoryView({ transactions, setTransactions, 
                             className="w-24 text-right p-1 border border-zinc-300 rounded font-bold text-sm focus:border-black outline-none"
                           />
                         ) : (
-                          <span className="font-black text-sm">R$ {item.item.price.toFixed(2)}</span>
+                          <span className="font-black text-sm">{mask(`R$ ${item.item.price.toFixed(2)}`)}</span>
                         )}
                       </div>
                     ))}
@@ -170,7 +172,7 @@ export default function TransactionHistoryView({ transactions, setTransactions, 
                   {t.discount > 0 && (
                     <div className="px-4 py-2 bg-green-50 text-green-700 font-bold text-xs uppercase flex justify-between">
                       <span>Desconto</span>
-                      <span>- R$ {t.discount.toFixed(2)}</span>
+                      <span>{mask(`- R$ ${t.discount.toFixed(2)}`)}</span>
                     </div>
                   )}
                 </div>

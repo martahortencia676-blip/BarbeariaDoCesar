@@ -36,10 +36,41 @@ export default function App() {
   const [loggedIn, setLoggedIn] = useState(() => !!getSession());
   const [userRole, setUserRole] = useState(() => getSession()?.role || null);
   const [password, setPassword, passwordLoaded] = useFirestoreSetting('password', 'Bcesar@26');
-  const [hideValues, setHideValues] = useState(false);
+  const [hideValues, setHideValues] = useState(() => {
+    const saved = sessionStorage.getItem('barbearia_hideValues');
+    return saved === 'true';
+  });
+
+  // Persistir hideValues no sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem('barbearia_hideValues', String(hideValues));
+  }, [hideValues]);
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    const saved = sessionStorage.getItem('barbearia_activeTab');
+    return saved || 'dashboard';
+  });
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Persistir aba ativa e histórico do navegador
+  useEffect(() => {
+    sessionStorage.setItem('barbearia_activeTab', activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    const onPopState = (e) => {
+      if (e.state?.tab) {
+        setActiveTab(e.state.tab);
+        setSidebarOpen(false);
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    // Estado inicial no histórico
+    if (!window.history.state?.tab) {
+      window.history.replaceState({ tab: activeTab }, '');
+    }
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
   const [newPasswordInput, setNewPasswordInput] = useState('');
   const [passwordMsg, setPasswordMsg] = useState('');
 
@@ -69,7 +100,15 @@ export default function App() {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({ role, lastActivity: Date.now() }));
     setUserRole(role);
     setLoggedIn(true);
-    if (role === 'rodrigo') setActiveTab('rodrigo');
+    const tab = role === 'rodrigo' ? 'rodrigo' : 'dashboard';
+    setActiveTab(tab);
+    sessionStorage.setItem('barbearia_activeTab', tab);
+    window.history.replaceState({ tab }, '');
+    // Rodrigo sempre inicia com valores ocultos por segurança
+    if (role === 'rodrigo') {
+      setHideValues(true);
+      sessionStorage.setItem('barbearia_hideValues', 'true');
+    }
     // Registrar log de login
     setLoginLogs(prev => [...prev, { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), role, action: 'login', timestamp: new Date() }]);
   };
@@ -117,6 +156,9 @@ export default function App() {
 
   // --- RENDERIZAÇÃO PRINCIPAL DO SISTEMA ---
   const handleTabChange = (tab) => {
+    if (tab !== activeTab) {
+      window.history.pushState({ tab }, '');
+    }
     setActiveTab(tab);
     setSidebarOpen(false);
   };
@@ -295,6 +337,7 @@ export default function App() {
             transactions={transactions}
             customers={customers}
             services={services}
+            hideValues={hideValues}
           />
         )}
 
@@ -305,6 +348,7 @@ export default function App() {
             customers={customers}
             barbers={barbers}
             userRole={userRole}
+            hideValues={hideValues}
           />
         )}
 

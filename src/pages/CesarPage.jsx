@@ -4,10 +4,12 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const CESAR_ID = 'b1';
 
-export default function CesarPage({ transactions, customers, services, hideServiceValues = false }) {
+export default function CesarPage({ transactions, customers, services, hideValues = false }) {
   const today = new Date();
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
+
+  const mask = v => hideValues ? '****' : v;
 
   const getCustomerName = id => {
     const c = customers.find(c => c.id === id);
@@ -119,7 +121,7 @@ export default function CesarPage({ transactions, customers, services, hideServi
             <p className="text-green-700 font-bold text-xs uppercase tracking-widest mb-1">
               <DollarSign className="w-4 h-4 inline" /> Receita Serviços (100%)
             </p>
-            <div className="text-3xl font-black text-green-900">R$ {totalServices.toFixed(2)}</div>
+            <div className="text-3xl font-black text-green-900">{mask(`R$ ${totalServices.toFixed(2)}`)}</div>
             <p className="text-xs text-green-600 mt-1 font-medium">{serviceItems.length} serviços</p>
           </div>
 
@@ -138,7 +140,7 @@ export default function CesarPage({ transactions, customers, services, hideServi
           <div className="bg-white p-6 rounded-2xl border border-zinc-200">
             <p className="text-zinc-500 font-bold text-xs uppercase tracking-widest mb-1">Produtos Vendidos</p>
             <div className="text-3xl font-black text-black">{productItems.length}</div>
-            <p className="text-xs text-zinc-400 mt-1 font-medium">R$ {totalProducts.toFixed(2)} total</p>
+            <p className="text-xs text-zinc-400 mt-1 font-medium">{mask(`R$ ${totalProducts.toFixed(2)}`)} total</p>
           </div>
         </div>
 
@@ -152,7 +154,7 @@ export default function CesarPage({ transactions, customers, services, hideServi
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="day" fontSize={11} />
               <YAxis fontSize={11} />
-              <Tooltip formatter={(v, name) => name === 'valor' ? `R$ ${v.toFixed(2)}` : v} />
+              <Tooltip formatter={(v, name) => name === 'valor' ? mask(`R$ ${v.toFixed(2)}`) : v} />
               <Bar dataKey="servicos" fill="#000000" radius={[6, 6, 0, 0]} name="Serviços" />
             </BarChart>
           </ResponsiveContainer>
@@ -203,7 +205,7 @@ export default function CesarPage({ transactions, customers, services, hideServi
                       <td className="p-3 font-medium">{new Date(item.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</td>
                       <td className="p-3 font-medium">{item.customerName}</td>
                       <td className="p-3 font-bold">{item.name}</td>
-                      <td className="p-3 font-black text-right text-green-700">R$ {item.price.toFixed(2)}</td>
+                      <td className="p-3 font-black text-right text-green-700">{mask(`R$ ${item.price.toFixed(2)}`)}</td>
                     </tr>
                   ))
                 )}
@@ -212,7 +214,7 @@ export default function CesarPage({ transactions, customers, services, hideServi
                 <tfoot>
                   <tr className="bg-zinc-100 font-black text-sm">
                     <td colSpan={4} className="p-3 uppercase">Total do Mês</td>
-                    <td className="p-3 text-right text-green-700">R$ {totalServices.toFixed(2)}</td>
+                    <td className="p-3 text-right text-green-700">{mask(`R$ ${totalServices.toFixed(2)}`)}</td>
                   </tr>
                 </tfoot>
               )}
@@ -242,14 +244,14 @@ export default function CesarPage({ transactions, customers, services, hideServi
                       <td className="p-3 font-medium">{new Date(item.date).toLocaleDateString('pt-BR')}</td>
                       <td className="p-3 font-medium">{item.customerName}</td>
                       <td className="p-3 font-bold">{item.name}</td>
-                      <td className="p-3 font-black text-right">R$ {item.price.toFixed(2)}</td>
+                      <td className="p-3 font-black text-right">{mask(`R$ ${item.price.toFixed(2)}`)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="bg-zinc-100 font-black text-sm">
                     <td colSpan={3} className="p-3 uppercase">Total Produtos</td>
-                    <td className="p-3 text-right">R$ {totalProducts.toFixed(2)}</td>
+                    <td className="p-3 text-right">{mask(`R$ ${totalProducts.toFixed(2)}`)}</td>
                   </tr>
                 </tfoot>
               </table>

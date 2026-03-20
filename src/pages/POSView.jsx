@@ -19,8 +19,10 @@ export default function POSView({
   setTransactions,
   paymentMethods,
   coupons,
-  setCoupons
+  setCoupons,
+  hideValues = false
 }) {
+  const mask = v => hideValues ? '****' : v;
   const [selectedApptId, setSelectedApptId] = useState('');
   const [selectedBarberId, setSelectedBarberId] = useState(barbers[0].id);
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
@@ -228,7 +230,7 @@ export default function POSView({
             >
               <div className="font-bold text-black text-sm">{service.name}</div>
               <div className="text-xs text-zinc-400 mt-1 font-medium">{service.duration} min</div>
-              <div className="mt-2 text-lg font-black text-black">R$ {service.price.toFixed(2)}</div>
+              <div className="mt-2 text-lg font-black text-black">{mask(`R$ ${service.price.toFixed(2)}`)}</div>
             </button>
           ))}
           {services.filter(s => s.name.toLowerCase().includes(serviceSearch.toLowerCase())).length === 0 && (
@@ -267,7 +269,7 @@ export default function POSView({
               <div className={`text-sm mt-1 font-medium ${product.stock <= product.minStock && product.stock > 0 ? 'text-black bg-zinc-200 inline-block px-1 rounded' : 'text-zinc-500'}`}>
                 Estoque: {product.stock}
               </div>
-              <div className="mt-3 text-lg font-black text-black">R$ {product.price.toFixed(2)}</div>
+              <div className="mt-3 text-lg font-black text-black">{mask(`R$ ${product.price.toFixed(2)}`)}</div>
             </button>
           ))}
         </div>
@@ -324,7 +326,7 @@ export default function POSView({
                       )}
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="font-black text-black">R$ {entry.item.price.toFixed(2)}</span>
+                      <span className="font-black text-black">{mask(`R$ ${entry.item.price.toFixed(2)}`)}</span>
                       <button onClick={() => handleRemoveItem(index)} className="text-zinc-400 hover:text-black text-xs mt-2 flex items-center gap-1 font-bold">
                         <Trash2 className="w-3 h-3" /> Remover
                       </button>
@@ -370,23 +372,23 @@ export default function POSView({
 
               <div className="flex justify-between text-zinc-600 mb-2 font-bold text-sm uppercase">
                 <span>Subtotal</span>
-                <span>R$ {subtotal.toFixed(2)}</span>
+                <span>{mask(`R$ ${subtotal.toFixed(2)}`)}</span>
               </div>
               {currentTab.discount > 0 && (
                 <div className="flex justify-between text-black mb-2 font-bold text-sm uppercase">
                   <span>Desconto Fidelidade</span>
-                  <span>- R$ {currentTab.discount.toFixed(2)}</span>
+                  <span>{mask(`- R$ ${currentTab.discount.toFixed(2)}`)}</span>
                 </div>
               )}
               {couponDiscount > 0 && (
                 <div className="flex justify-between text-green-600 mb-2 font-bold text-sm uppercase">
                   <span>Desconto Cupom</span>
-                  <span>- R$ {couponDiscount.toFixed(2)}</span>
+                  <span>{mask(`- R$ ${couponDiscount.toFixed(2)}`)}</span>
                 </div>
               )}
               <div className="flex justify-between text-2xl font-black text-black mb-6 pb-4 border-b border-zinc-200">
                 <span>Total</span>
-                <span>R$ {total.toFixed(2)}</span>
+                <span>{mask(`R$ ${total.toFixed(2)}`)}</span>
               </div>
               
               <button 
