@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Scissors, Beer, Trash2, Calendar, Cloud } from 'lucide-react';
+import { Scissors, Beer, Trash2, Calendar, Cloud, Search } from 'lucide-react';
 import { toast } from '../components/Toast';
 import { generateId } from '../utils/helpers';
 
@@ -25,6 +25,7 @@ export default function SettingsView({
   const [pName, setPName] = useState('');
   const [pPrice, setPPrice] = useState('');
   const [pStock, setPStock] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleAddService = (e) => {
     e.preventDefault();
@@ -51,6 +52,18 @@ export default function SettingsView({
       <div className="max-w-7xl mx-auto">
         <h2 className="text-2xl md:text-3xl font-black text-black uppercase tracking-wider border-b-4 border-black pb-3 mb-8">Configurações & Tabela de Preços</h2>
         
+        {/* Pesquisa unificada */}
+        <div className="relative mb-8">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+          <input
+            type="text"
+            placeholder="Pesquisar serviços e produtos..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 border-2 border-zinc-300 rounded-xl focus:border-black focus:ring-2 focus:ring-black outline-none font-bold text-sm bg-white"
+          />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
           <h3 className="text-lg font-black mb-4 text-black uppercase tracking-wider flex items-center gap-2"><Scissors className="w-5 h-5"/> Tabela de Serviços</h3>
@@ -63,12 +76,14 @@ export default function SettingsView({
             <button type="submit" className="bg-black text-white font-bold py-3 rounded-lg uppercase tracking-wider hover:bg-zinc-800 transition-colors">Adicionar Serviço</button>
           </form>
           <div className="bg-white rounded-xl border border-zinc-300 overflow-hidden max-h-96 overflow-y-auto">
-            {services.length === 0 ? (
+            {(() => {
+              const filtered = services.filter(s => !searchQuery || s.name.toLowerCase().includes(searchQuery.toLowerCase()));
+              return filtered.length === 0 ? (
               <div className="p-8 text-center text-zinc-400">
-                <p className="font-bold text-sm uppercase">Nenhum serviço cadastrado</p>
+                <p className="font-bold text-sm uppercase">{searchQuery ? 'Nenhum serviço encontrado' : 'Nenhum serviço cadastrado'}</p>
               </div>
             ) : (
-              services.map(s => (
+              filtered.map(s => (
                 <div key={s.id} className="flex justify-between items-center p-4 border-b border-zinc-200 last:border-0 hover:bg-zinc-50 transition-colors">
                   <div>
                     <p className="font-bold text-black text-sm">{s.name}</p>
@@ -80,7 +95,8 @@ export default function SettingsView({
                   </div>
                 </div>
               ))
-            )}
+            );
+            })()}
           </div>
         </div>
 
@@ -95,12 +111,14 @@ export default function SettingsView({
             <button type="submit" className="bg-black text-white font-bold py-3 rounded-lg uppercase tracking-wider hover:bg-zinc-800 transition-colors">Adicionar Produto</button>
           </form>
           <div className="bg-white rounded-xl border border-zinc-300 overflow-hidden max-h-96 overflow-y-auto">
-            {products.length === 0 ? (
+            {(() => {
+              const filtered = products.filter(p => !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+              return filtered.length === 0 ? (
               <div className="p-8 text-center text-zinc-400">
-                <p className="font-bold text-sm uppercase">Nenhum produto cadastrado</p>
+                <p className="font-bold text-sm uppercase">{searchQuery ? 'Nenhum produto encontrado' : 'Nenhum produto cadastrado'}</p>
               </div>
             ) : (
-              products.map(p => (
+              filtered.map(p => (
                 <div key={p.id} className="flex justify-between items-center p-4 border-b border-zinc-200 last:border-0 hover:bg-zinc-50 transition-colors">
                   <div>
                     <p className="font-bold text-black text-sm">{p.name}</p>
@@ -112,7 +130,8 @@ export default function SettingsView({
                   </div>
                 </div>
               ))
-            )}
+            );
+            })()}
           </div>
         </div>
       </div>

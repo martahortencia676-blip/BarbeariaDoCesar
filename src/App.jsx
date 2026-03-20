@@ -12,6 +12,9 @@ import SettingsView from './pages/SettingsView';
 import CouponsView from './pages/CouponsView';
 import PerformanceView from './pages/PerformanceView';
 import RodrigoPage from './pages/RodrigoPage';
+import CesarPage from './pages/CesarPage';
+import TransactionHistoryView from './pages/TransactionHistoryView';
+import LoginLogsView from './pages/LoginLogsView';
 import LoginScreen from './components/LoginScreen.jsx';
 import { Menu, X, LogOut } from 'lucide-react';
 
@@ -67,6 +70,8 @@ export default function App() {
     setUserRole(role);
     setLoggedIn(true);
     if (role === 'rodrigo') setActiveTab('rodrigo');
+    // Registrar log de login
+    setLoginLogs(prev => [...prev, { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), role, action: 'login', timestamp: new Date() }]);
   };
   
   // Bancos de dados editáveis (sincronizados com Firebase)
@@ -86,6 +91,9 @@ export default function App() {
   
   // Cupons (sincronizado com Firebase)
   const [coupons, setCoupons, couponsLoaded] = useFirestoreCollection('coupons', []);
+
+  // Login Logs (sincronizado com Firebase)
+  const [loginLogs, setLoginLogs, loginLogsLoaded] = useFirestoreCollection('loginLogs', []);
 
   const dataLoaded = servicesLoaded && productsLoaded && customersLoaded && transactionsLoaded && passwordLoaded;
 
@@ -122,7 +130,7 @@ export default function App() {
 
       {/* Sidebar */}
       <div className={`fixed md:static inset-y-0 left-0 z-40 transform transition-transform duration-200 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} lowStockCount={lowStockCount} userRole={userRole} onLogout={() => { sessionStorage.removeItem(SESSION_KEY); setLoggedIn(false); setUserRole(null); }} />
+        <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} lowStockCount={lowStockCount} userRole={userRole} onLogout={() => { setLoginLogs(prev => [...prev, { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), role: userRole, action: 'logout', timestamp: new Date() }]); sessionStorage.removeItem(SESSION_KEY); setLoggedIn(false); setUserRole(null); }} />
       </div>
 
       <main className="flex-1 overflow-auto bg-zinc-100 min-w-0">
@@ -136,7 +144,7 @@ export default function App() {
           </button>
           <div className="flex flex-wrap items-center gap-2 ml-auto">
             <button
-              onClick={() => { sessionStorage.removeItem(SESSION_KEY); setLoggedIn(false); setUserRole(null); }}
+              onClick={() => { setLoginLogs(prev => [...prev, { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), role: userRole, action: 'logout', timestamp: new Date() }]); sessionStorage.removeItem(SESSION_KEY); setLoggedIn(false); setUserRole(null); }}
               className="bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2 px-3 md:px-4 rounded-lg text-xs uppercase tracking-wider flex items-center gap-1"
             >
               <LogOut className="w-4 h-4" /> Sair
@@ -280,6 +288,28 @@ export default function App() {
             services={services}
             hideServiceValues={userRole === 'rodrigo'}
           />
+        )}
+
+        {activeTab === 'cesar' && (
+          <CesarPage
+            transactions={transactions}
+            customers={customers}
+            services={services}
+          />
+        )}
+
+        {activeTab === 'history' && (
+          <TransactionHistoryView
+            transactions={transactions}
+            setTransactions={setTransactions}
+            customers={customers}
+            barbers={barbers}
+            userRole={userRole}
+          />
+        )}
+
+        {activeTab === 'loginlogs' && (
+          <LoginLogsView loginLogs={loginLogs} />
         )}
         
         {activeTab === 'settings' && (

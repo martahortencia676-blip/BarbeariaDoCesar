@@ -1,4 +1,4 @@
-import { Calendar, ShoppingCart, BarChart3, Settings, Users, LayoutGrid, Ticket, Award, User, LogOut } from 'lucide-react';
+import { Calendar, ShoppingCart, BarChart3, Settings, Users, LayoutGrid, Ticket, Award, User, LogOut, ClipboardList, Shield, Scissors } from 'lucide-react';
 
 export default function Sidebar({ activeTab, setActiveTab, lowStockCount, userRole, onLogout }) {
   return (
@@ -57,6 +57,18 @@ export default function Sidebar({ activeTab, setActiveTab, lowStockCount, userRo
 
         <button onClick={() => setActiveTab('rodrigo')} className={`flex items-center gap-3 p-3 rounded-xl font-bold uppercase text-sm tracking-wider transition-colors ${activeTab === 'rodrigo' ? 'bg-white text-black' : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'}`}>
           <User className="w-5 h-5 shrink-0" /><span className="md:hidden lg:block">Rodrigo</span>
+        </button>
+
+        <button onClick={() => setActiveTab('cesar')} className={`flex items-center gap-3 p-3 rounded-xl font-bold uppercase text-sm tracking-wider transition-colors ${activeTab === 'cesar' ? 'bg-white text-black' : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'}`}>
+          <Scissors className="w-5 h-5 shrink-0" /><span className="md:hidden lg:block">César</span>
+        </button>
+
+        <button onClick={() => setActiveTab('history')} className={`flex items-center gap-3 p-3 rounded-xl font-bold uppercase text-sm tracking-wider transition-colors ${activeTab === 'history' ? 'bg-white text-black' : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'}`}>
+          <ClipboardList className="w-5 h-5 shrink-0" /><span className="md:hidden lg:block">Histórico</span>
+        </button>
+
+        <button onClick={() => setActiveTab('loginlogs')} className={`flex items-center gap-3 p-3 rounded-xl font-bold uppercase text-sm tracking-wider transition-colors ${activeTab === 'loginlogs' ? 'bg-white text-black' : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'}`}>
+          <Shield className="w-5 h-5 shrink-0" /><span className="md:hidden lg:block">Logs Acesso</span>
         </button>
 
         <button onClick={() => setActiveTab('settings')} className={`flex items-center gap-3 p-3 rounded-xl font-bold uppercase text-sm tracking-wider transition-colors relative ${activeTab === 'settings' ? 'bg-white text-black' : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'}`}>
