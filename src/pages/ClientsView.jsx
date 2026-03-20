@@ -137,7 +137,8 @@ export default function ClientsView({
                 required
               />
               <input
-                type="text"
+                type="tel"
+                inputMode="tel"
                 placeholder="(83) 99999-9999"
                 value={newPhone}
                 onChange={handlePhoneChange}
@@ -279,7 +280,7 @@ export default function ClientsView({
                     </div>
                     <div>
                       <label className="text-xs text-zinc-500 font-bold uppercase">Telefone</label>
-                      <input type="text" value={editData.phone} onChange={e => setEditData({...editData, phone: formatPhoneNumber(e.target.value)})} className="w-full p-2 border border-zinc-300 rounded focus:border-black outline-none font-bold text-sm" />
+                      <input type="tel" inputMode="tel" value={editData.phone} onChange={e => setEditData({...editData, phone: formatPhoneNumber(e.target.value)})} className="w-full p-2 border border-zinc-300 rounded focus:border-black outline-none font-bold text-sm" />
                     </div>
                     <div>
                       <label className="text-xs text-zinc-500 font-bold uppercase">Data de Nascimento</label>

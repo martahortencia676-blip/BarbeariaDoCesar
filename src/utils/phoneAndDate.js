@@ -1,8 +1,9 @@
-// Formatar telefone para (83) 99999-9999
+// Formatar telefone para (83) 99999-9999 — aceita apenas dígitos
 export const formatPhoneNumber = (phone) => {
   if (!phone) return '';
-  const numbers = phone.replace(/\D/g, '');
-  if (numbers.length !== 11) return phone;
+  const numbers = phone.replace(/\D/g, '').slice(0, 11);
+  if (numbers.length <= 2) return `(${numbers}`;
+  if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
   return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
 };
 

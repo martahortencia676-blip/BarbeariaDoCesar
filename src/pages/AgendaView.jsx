@@ -201,7 +201,17 @@ export default function AgendaView({
   };
 
   const today = new Date().toISOString().split('T')[0];
-  const todaysAppointments = appointments.filter(a => a.date === today && a.status !== 'completed');
+  const upcomingAppointments = appointments
+    .filter(a => a.date >= today && a.status !== 'completed')
+    .sort((a, b) => a.date === b.date ? a.time.localeCompare(b.time) : a.date.localeCompare(b.date));
+
+  // Agrupar por data
+  const groupedByDate = {};
+  upcomingAppointments.forEach(appt => {
+    if (!groupedByDate[appt.date]) groupedByDate[appt.date] = [];
+    groupedByDate[appt.date].push(appt);
+  });
+  const sortedDates = Object.keys(groupedByDate).sort();
 
   return (
     <div className="p-3 md:p-6">
@@ -263,7 +273,7 @@ export default function AgendaView({
             
             <div>
               <label className="block text-xs font-bold text-zinc-500 mb-1 uppercase tracking-wider">WhatsApp (Opcional)</label>
-              <input type="text" value={newApptPhone} onChange={handleApptPhoneChange} placeholder="(DD) 90000-0000" className="w-full p-2 border border-zinc-300 rounded focus:border-black focus:ring-1 focus:ring-black outline-none font-bold text-sm" />
+              <input type="tel" inputMode="tel" value={newApptPhone} onChange={handleApptPhoneChange} placeholder="(DD) 90000-0000" className="w-full p-2 border border-zinc-300 rounded focus:border-black focus:ring-1 focus:ring-black outline-none font-bold text-sm" />
             </div>
 
             <div>
@@ -339,7 +349,7 @@ export default function AgendaView({
             </h3>
             <form onSubmit={handleAddStandby} className="bg-white p-4 rounded-xl shadow-sm border-2 border-zinc-200 flex flex-col gap-3 mb-4">
               <input type="text" placeholder="Nome do Cliente" value={standbyName} onChange={e=>setStandbyName(e.target.value)} className="p-2 border border-zinc-300 rounded focus:border-black outline-none font-bold text-sm" required />
-              <input type="text" placeholder="WhatsApp" value={standbyPhone} onChange={handleStandbyPhoneChange} className="p-2 border border-zinc-300 rounded focus:border-black outline-none font-bold text-sm" />
+              <input type="tel" inputMode="tel" placeholder="WhatsApp" value={standbyPhone} onChange={handleStandbyPhoneChange} className="p-2 border border-zinc-300 rounded focus:border-black outline-none font-bold text-sm" />
               <button type="submit" className="bg-zinc-200 hover:bg-zinc-300 text-black font-bold py-2 rounded uppercase tracking-wider text-xs transition-colors">Adicionar à Espera</button>
             </form>
             
@@ -364,52 +374,69 @@ export default function AgendaView({
         {/* Lado Direito: Agendamentos do Dia */}
         <div className="lg:col-span-2">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-black text-black uppercase tracking-wide flex items-center gap-2"><Calendar className="w-5 h-5"/> Hoje ({formatDate(today)})</h3>
+            <h3 className="text-lg font-black text-black uppercase tracking-wide flex items-center gap-2"><Calendar className="w-5 h-5"/> Agendamentos</h3>
           </div>
 
-          <div className="space-y-4">
-            {todaysAppointments.length === 0 ? (
+          <div className="space-y-6">
+            {sortedDates.length === 0 ? (
               <div className="bg-zinc-50 border-2 border-dashed border-zinc-300 p-10 text-center rounded-xl">
-                <p className="text-zinc-500 font-bold uppercase tracking-wider">Nenhum agendamento para hoje</p>
+                <p className="text-zinc-500 font-bold uppercase tracking-wider">Nenhum agendamento futuro</p>
               </div>
             ) : (
-              todaysAppointments.map((appt) => {
-                const srv = services.find(s => s.id === appt.serviceId);
-                const brb = barbers.find(b => b.id === appt.barberId);
-                const isInService = appt.status === 'in-service';
-
+              sortedDates.map(date => {
+                const isToday = date === today;
+                const dateLabel = isToday ? `Hoje (${formatDate(date)})` : formatDate(date);
+                const dayName = new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long' });
                 return (
-                  <div key={appt.id} className={`p-4 rounded-xl border-2 flex items-center justify-between transition-all ${isInService ? 'bg-black text-white border-black' : 'bg-white border-zinc-200'}`}>
-                    <div className="flex items-center gap-4">
-                      <div className={`text-xl font-black px-3 py-1 rounded ${isInService ? 'bg-zinc-800 text-white' : 'bg-zinc-100 text-black'}`}>
-                        {appt.time}
-                      </div>
-                      <div>
-                        <h4 className={`font-black text-lg ${isInService ? 'text-white' : 'text-black'}`}>{appt.customerName}</h4>
-                        <p className={`text-sm font-medium flex gap-2 ${isInService ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                          <span>{srv?.name}</span> • <span>{brb?.name}</span>
-                        </p>
-                      </div>
+                  <div key={date}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className={`text-sm font-black uppercase tracking-wider ${isToday ? 'text-black' : 'text-zinc-500'}`}>{dateLabel}</span>
+                      <span className="text-xs text-zinc-400 font-medium capitalize">({dayName})</span>
+                      <span className="text-xs bg-zinc-200 text-zinc-600 font-black px-2 py-0.5 rounded">{groupedByDate[date].length}</span>
                     </div>
-                    
-                    <div>
-                      {isInService ? (
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 animate-pulse">Em Atendimento</span>
-                          <button onClick={() => setActiveTab('pos')} className="bg-white text-black hover:bg-zinc-200 px-4 py-2 rounded font-black uppercase text-xs transition-colors">
-                            Comanda
-                          </button>
+                    <div className="space-y-3">
+                    {groupedByDate[date].map(appt => {
+                      const srv = services.find(s => s.id === appt.serviceId);
+                      const brb = barbers.find(b => b.id === appt.barberId);
+                      const isInService = appt.status === 'in-service';
+
+                      return (
+                        <div key={appt.id} className={`p-4 rounded-xl border-2 flex items-center justify-between transition-all ${isInService ? 'bg-black text-white border-black' : 'bg-white border-zinc-200'}`}>
+                          <div className="flex items-center gap-4">
+                            <div className={`text-xl font-black px-3 py-1 rounded ${isInService ? 'bg-zinc-800 text-white' : 'bg-zinc-100 text-black'}`}>
+                              {appt.time}
+                            </div>
+                            <div>
+                              <h4 className={`font-black text-lg ${isInService ? 'text-white' : 'text-black'}`}>{appt.customerName}</h4>
+                              <p className={`text-sm font-medium flex gap-2 ${isInService ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                                <span>{srv?.name}</span> • <span>{brb?.name}</span>
+                              </p>
+                            </div>
+                          </div>
+                          <div>
+                            {isInService ? (
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 animate-pulse">Em Atendimento</span>
+                                <button onClick={() => setActiveTab('pos')} className="bg-white text-black hover:bg-zinc-200 px-4 py-2 rounded font-black uppercase text-xs transition-colors">Comanda</button>
+                              </div>
+                            ) : isToday ? (
+                              <div className="flex items-center gap-2">
+                                <button onClick={() => cancelAppointment(appt.id)} className="text-zinc-400 hover:text-red-600 p-2 border border-zinc-200 hover:border-red-500 hover:bg-red-50 rounded bg-white transition-all" title="Cancelar">
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
+                                <button onClick={() => startService(appt.id)} className="bg-black text-white hover:bg-zinc-800 px-4 py-2 rounded flex items-center gap-2 font-black uppercase text-xs transition-colors">
+                                  <Play className="w-4 h-4" fill="currentColor" /> Iniciar
+                                </button>
+                              </div>
+                            ) : (
+                              <button onClick={() => cancelAppointment(appt.id)} className="text-zinc-400 hover:text-red-600 p-2 border border-zinc-200 hover:border-red-500 hover:bg-red-50 rounded bg-white transition-all" title="Cancelar">
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => cancelAppointment(appt.id)} className="text-zinc-400 hover:text-red-600 p-2 border border-zinc-200 hover:border-red-500 hover:bg-red-50 rounded bg-white transition-all" title="Cancelar Agendamento">
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                          <button onClick={() => startService(appt.id)} className="bg-black text-white hover:bg-zinc-800 px-4 py-2 rounded flex items-center gap-2 font-black uppercase text-xs transition-colors">
-                            <Play className="w-4 h-4" fill="currentColor" /> Iniciar
-                          </button>
-                        </div>
-                      )}
+                      );
+                    })}
                     </div>
                   </div>
                 );
