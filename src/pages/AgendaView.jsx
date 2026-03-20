@@ -28,6 +28,7 @@ export default function AgendaView({
   const [apptError, setApptError] = useState('');
   const [standbyName, setStandbyName] = useState('');
   const [standbyPhone, setStandbyPhone] = useState('');
+  const [standbyAvailableAt, setStandbyAvailableAt] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
 
@@ -167,9 +168,10 @@ export default function AgendaView({
   const handleAddStandby = (e) => {
     e.preventDefault();
     if (!standbyName) return;
-    setStandbyList([...standbyList, { id: generateId(), name: standbyName, phone: standbyPhone }]);
+    setStandbyList([...standbyList, { id: generateId(), name: standbyName, phone: standbyPhone, registeredAt: new Date(), availableAt: standbyAvailableAt || null }]);
     setStandbyName('');
     setStandbyPhone('');
+    setStandbyAvailableAt('');
     toast('Adicionado à lista de espera');
   };
 
@@ -350,6 +352,10 @@ export default function AgendaView({
             <form onSubmit={handleAddStandby} className="bg-white p-4 rounded-xl shadow-sm border-2 border-zinc-200 flex flex-col gap-3 mb-4">
               <input type="text" placeholder="Nome do Cliente" value={standbyName} onChange={e=>setStandbyName(e.target.value)} className="p-2 border border-zinc-300 rounded focus:border-black outline-none font-bold text-sm" required />
               <input type="tel" inputMode="tel" placeholder="WhatsApp" value={standbyPhone} onChange={handleStandbyPhoneChange} className="p-2 border border-zinc-300 rounded focus:border-black outline-none font-bold text-sm" />
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-bold text-zinc-500 whitespace-nowrap">Disponível às:</label>
+                <input type="time" value={standbyAvailableAt} onChange={e=>setStandbyAvailableAt(e.target.value)} className="p-2 border border-zinc-300 rounded focus:border-black outline-none font-bold text-sm flex-1" />
+              </div>
               <button type="submit" className="bg-zinc-200 hover:bg-zinc-300 text-black font-bold py-2 rounded uppercase tracking-wider text-xs transition-colors">Adicionar à Espera</button>
             </form>
             
@@ -359,6 +365,10 @@ export default function AgendaView({
                   <div>
                     <p className="font-bold text-black text-sm">{s.name}</p>
                     <p className="text-xs text-zinc-500 font-medium">{s.phone}</p>
+                    <div className="flex gap-3 mt-1">
+                      {s.registeredAt && <p className="text-[10px] text-zinc-400 font-bold">Registrado às {new Date(s.registeredAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>}
+                      {s.availableAt && <p className="text-[10px] text-emerald-600 font-bold">Disponível às {s.availableAt}</p>}
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => promoteStandbyToAppt(s)} className="text-xs bg-black hover:bg-zinc-800 text-white px-3 py-1 rounded font-black uppercase transition-colors">Agendar</button>

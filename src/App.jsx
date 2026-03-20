@@ -121,7 +121,7 @@ export default function App() {
   
   // Operacional (sincronizado com Firebase)
   const [appointments, setAppointments, appointmentsLoaded] = useFirestoreCollection('appointments', []);
-  const [standbyList, setStandbyList] = useState([]);
+  const [standbyList, setStandbyList] = useFirestoreCollection('standbyList', []);
   
   // Financeiro (sincronizado com Firebase)
   const [activeTabs, setActiveTabs] = useState({});

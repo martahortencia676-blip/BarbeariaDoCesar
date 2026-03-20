@@ -28,8 +28,7 @@ export default function POSView({
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('pix');
   const [selectedCouponId, setSelectedCouponId] = useState('');
-  const [serviceSearch, setServiceSearch] = useState('');
-  const [productSearch, setProductSearch] = useState('');
+  const [itemSearch, setItemSearch] = useState('');
   const [showComanda, setShowComanda] = useState(false);
 
   const activeClients = appointments.filter(a => a.status === 'in-service');
@@ -206,22 +205,24 @@ export default function POSView({
           </div>
         </div>
 
-        <h3 className="text-lg font-black text-black mb-4 flex items-center gap-2 uppercase tracking-wide border-b border-zinc-300 pb-2">
-          <Scissors className="w-5 h-5" /> Adicionar Serviços
-        </h3>
-        <div className="relative mb-4">
+        {/* Pesquisa unificada */}
+        <div className="relative mb-6">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
           <input
             type="text"
-            placeholder="Pesquisar serviço..."
-            value={serviceSearch}
-            onChange={e => setServiceSearch(e.target.value)}
+            placeholder="Pesquisar serviço ou produto..."
+            value={itemSearch}
+            onChange={e => setItemSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-3 border-2 border-zinc-200 rounded-xl font-bold focus:border-black outline-none text-sm bg-white"
           />
         </div>
+
+        <h3 className="text-lg font-black text-black mb-4 flex items-center gap-2 uppercase tracking-wide border-b border-zinc-300 pb-2">
+          <Scissors className="w-5 h-5" /> Adicionar Serviços
+        </h3>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
           {services
-            .filter(s => s.name.toLowerCase().includes(serviceSearch.toLowerCase()))
+            .filter(s => s.name.toLowerCase().includes(itemSearch.toLowerCase()))
             .map(service => (
             <button
               key={service.id}
@@ -233,7 +234,7 @@ export default function POSView({
               <div className="mt-2 text-lg font-black text-black">{mask(`R$ ${service.price.toFixed(2)}`)}</div>
             </button>
           ))}
-          {services.filter(s => s.name.toLowerCase().includes(serviceSearch.toLowerCase())).length === 0 && (
+          {services.filter(s => s.name.toLowerCase().includes(itemSearch.toLowerCase())).length === 0 && (
             <p className="col-span-full text-center text-zinc-400 font-bold text-sm py-4">Nenhum serviço encontrado</p>
           )}
         </div>
@@ -241,19 +242,9 @@ export default function POSView({
         <h3 className="text-lg font-black text-black mb-4 flex items-center gap-2 uppercase tracking-wide border-b border-zinc-300 pb-2">
           <Beer className="w-5 h-5" /> Consumo & Produtos
         </h3>
-        <div className="relative mb-4">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
-          <input
-            type="text"
-            placeholder="Pesquisar produto..."
-            value={productSearch}
-            onChange={e => setProductSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border-2 border-zinc-200 rounded-xl font-bold focus:border-black outline-none text-sm bg-white"
-          />
-        </div>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           {products
-            .filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()))
+            .filter(p => p.name.toLowerCase().includes(itemSearch.toLowerCase()))
             .map(product => (
             <button
               key={product.id}
