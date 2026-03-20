@@ -1,66 +1,53 @@
 import { useState } from 'react';
 import { Lock, Mail, ArrowLeft, Loader2 } from 'lucide-react';
-import emailjs from '@emailjs/browser';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../firebase';
 
-export default function LoginScreen({ onLogin, cesarPassword, rodrigoPassword, recoveryEmails, setRecoveryPassword, emailjsConfig }) {
-  const [input, setInput] = useState('');
+export default function LoginScreen({ onLogin }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotMsg, setForgotMsg] = useState('');
   const [sending, setSending] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (input === cesarPassword) {
-      setError('');
-      onLogin('cesar');
-    } else if (input === rodrigoPassword) {
-      setError('');
-      onLogin('rodrigo');
-    } else {
-      setError('Senha incorreta');
+    setError('');
+    setLoading(true);
+    try {
+      const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+      // onLogin será chamado pelo onAuthStateChanged no App.jsx
+    } catch (err) {
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+        setError('E-mail ou senha incorretos');
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Muitas tentativas. Tente novamente em alguns minutos.');
+      } else {
+        setError('Erro ao entrar. Tente novamente.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     if (!forgotEmail) return;
-
-    const emails = (recoveryEmails || []).map(e => e.email?.toLowerCase().trim());
-    if (emails.length === 0) {
-      setForgotMsg('Nenhum e-mail de recuperação cadastrado. Entre em contato com o proprietário.');
-      return;
-    }
-
-    if (!emails.includes(forgotEmail.toLowerCase().trim())) {
-      setForgotMsg('E-mail não corresponde a nenhum cadastrado.');
-      return;
-    }
-
-    if (!emailjsConfig?.serviceId || !emailjsConfig?.templateId || !emailjsConfig?.publicKey) {
-      setForgotMsg('Serviço de e-mail não configurado. Entre em contato com o proprietário.');
-      return;
-    }
-
     setSending(true);
+    setForgotMsg('');
     try {
-      const tempPass = 'Cesar' + Math.floor(1000 + Math.random() * 9000);
-      await emailjs.send(
-        emailjsConfig.serviceId,
-        emailjsConfig.templateId,
-        {
-          to_email: forgotEmail.trim(),
-          new_password: tempPass,
-          to_name: 'César',
-        },
-        emailjsConfig.publicKey
-      );
-      setRecoveryPassword(tempPass);
-      setForgotMsg('Nova senha enviada para o seu e-mail! Verifique sua caixa de entrada.');
+      await sendPasswordResetEmail(auth, forgotEmail.trim());
+      setForgotMsg('E-mail de recuperação enviado! Verifique sua caixa de entrada e spam.');
       setForgotEmail('');
     } catch (err) {
-      setForgotMsg('Erro ao enviar e-mail. Verifique a configuração do serviço.');
+      if (err.code === 'auth/user-not-found') {
+        setForgotMsg('E-mail não encontrado no sistema.');
+      } else {
+        setForgotMsg('Erro ao enviar. Verifique o e-mail e tente novamente.');
+      }
     } finally {
       setSending(false);
     }
@@ -101,7 +88,7 @@ export default function LoginScreen({ onLogin, cesarPassword, rodrigoPassword, r
                 <ArrowLeft className="w-3 h-3" /> Voltar
               </button>
               <h2 className="text-white font-black text-lg uppercase tracking-wider mb-2">Recuperar Senha</h2>
-              <p className="text-zinc-500 text-xs font-medium mb-6">Digite seu e-mail cadastrado. Uma nova senha será enviada diretamente para o seu Gmail.</p>
+              <p className="text-zinc-500 text-xs font-medium mb-6">Digite seu e-mail cadastrado. O Google enviará um link de recuperação diretamente para o seu Gmail.</p>
               <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
@@ -115,30 +102,41 @@ export default function LoginScreen({ onLogin, cesarPassword, rodrigoPassword, r
                   />
                 </div>
                 {forgotMsg && (
-                  <div className={`text-xs font-bold p-3 rounded-lg ${forgotMsg.includes('sucesso') ? 'bg-green-900/30 text-green-400 border border-green-800' : 'bg-red-900/30 text-red-400 border border-red-800'}`}>
+                  <div className={`text-xs font-bold p-3 rounded-lg ${forgotMsg.includes('enviado') ? 'bg-green-900/30 text-green-400 border border-green-800' : 'bg-red-900/30 text-red-400 border border-red-800'}`}>
                     {forgotMsg}
                   </div>
                 )}
                 <button type="submit" disabled={sending} className="bg-white text-black font-black py-3 rounded-xl uppercase tracking-wider hover:bg-zinc-200 transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50">
-                  {sending ? <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</> : 'Enviar Nova Senha'}
+                  {sending ? <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</> : 'Enviar Link de Recuperação'}
                 </button>
               </form>
             </>
           ) : (
             <>
               <h2 className="text-white font-black text-lg uppercase tracking-wider mb-1 text-center">Acesso ao Sistema</h2>
-              <p className="text-zinc-600 text-xs font-medium mb-6 text-center">Digite sua senha para entrar</p>
+              <p className="text-zinc-600 text-xs font-medium mb-6 text-center">Digite seu e-mail e senha para entrar</p>
               <form onSubmit={handleLogin} className="flex flex-col gap-4">
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+                  <input
+                    type="email"
+                    placeholder="E-mail"
+                    value={email}
+                    onChange={e => { setEmail(e.target.value); setError(''); }}
+                    className="w-full pl-10 pr-4 py-3 bg-zinc-800 border border-zinc-700 rounded-xl text-white font-bold focus:border-white outline-none text-sm placeholder-zinc-600"
+                    required
+                    autoFocus
+                  />
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
                   <input
                     type="password"
-                    placeholder="Digite a senha"
-                    value={input}
-                    onChange={e => { setInput(e.target.value); setError(''); }}
+                    placeholder="Senha"
+                    value={password}
+                    onChange={e => { setPassword(e.target.value); setError(''); }}
                     className="w-full pl-10 pr-4 py-3 bg-zinc-800 border border-zinc-700 rounded-xl text-white font-bold focus:border-white outline-none text-sm placeholder-zinc-600"
                     required
-                    autoFocus
                   />
                 </div>
                 {error && (
@@ -146,8 +144,8 @@ export default function LoginScreen({ onLogin, cesarPassword, rodrigoPassword, r
                     {error}
                   </div>
                 )}
-                <button type="submit" className="bg-white text-black font-black py-3 rounded-xl uppercase tracking-wider hover:bg-zinc-200 transition-colors text-sm">
-                  Entrar
+                <button type="submit" disabled={loading} className="bg-white text-black font-black py-3 rounded-xl uppercase tracking-wider hover:bg-zinc-200 transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50">
+                  {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Entrando...</> : 'Entrar'}
                 </button>
               </form>
               <button

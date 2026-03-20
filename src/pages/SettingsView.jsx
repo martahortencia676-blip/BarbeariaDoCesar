@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Scissors, Beer, Trash2, Cloud, Search, UserPlus, Users, Mail } from 'lucide-react';
+import { Scissors, Beer, Trash2, Cloud, Search, UserPlus, Users, Lock } from 'lucide-react';
 import { toast } from '../components/Toast';
 import { generateId } from '../utils/helpers';
 import ConfirmModal from '../components/ConfirmModal';
@@ -22,12 +22,10 @@ export default function SettingsView({
   manualTransactions,
   setManualTransactions,
   standbyList,
-  recoveryEmails,
-  setRecoveryEmails,
   darkMode,
   cesarPassword,
-  emailjsConfig,
-  setEmailjsConfig,
+  adminPin,
+  setAdminPin,
   userRole,
   loginLogs,
   setLoginLogs
@@ -41,13 +39,10 @@ export default function SettingsView({
   const [searchQuery, setSearchQuery] = useState('');
   const [bName, setBName] = useState('');
   const [bCommission, setBCommission] = useState('50');
-  const [emailInput, setEmailInput] = useState('');
   const [deletePasswordInput, setDeletePasswordInput] = useState('');
   const [deletingBarber, setDeletingBarber] = useState(null);
-  const [ejServiceId, setEjServiceId] = useState(emailjsConfig?.serviceId || '');
-  const [ejTemplateId, setEjTemplateId] = useState(emailjsConfig?.templateId || '');
-  const [ejPublicKey, setEjPublicKey] = useState(emailjsConfig?.publicKey || '');
   const [cleanupModal, setCleanupModal] = useState(false);
+  const [newPinInput, setNewPinInput] = useState('');
 
   const generateBarberPDF = (barber) => {
     const bTxns = transactions.filter(t => (t.items || []).some(i => i.barberId === barber.id));
@@ -438,80 +433,25 @@ export default function SettingsView({
         </div>
       </div>
 
-      {/* E-mails de Recuperação */}
+      {/* PIN de Segurança */}
       <div className="mt-8 mb-8">
         <h3 className="text-lg font-black mb-6 text-black uppercase tracking-wider flex items-center gap-2">
-          <Mail className="w-6 h-6" /> E-mails de Recuperação
+          <Lock className="w-6 h-6" /> PIN de Segurança
         </h3>
-        <div className={`rounded-2xl border shadow-sm p-6 ${darkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-300'}`}>
-          <div className={`border-l-4 p-4 rounded-lg mb-6 ${darkMode ? 'bg-blue-900/20 border-blue-500' : 'bg-blue-50 border-blue-400'}`}>
-            <p className={`text-sm font-medium ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>Cadastre e-mails para recuperação de senha. Quando clicar em "Esqueceu a senha?" na tela de login, a nova senha será enviada diretamente para o Gmail cadastrado.</p>
+        <div className="bg-white rounded-2xl border border-zinc-300 shadow-sm p-6">
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-lg mb-6">
+            <p className="text-sm text-blue-700 font-medium">O PIN é exigido para ações destrutivas como excluir transações, clientes e limpar dados. PIN atual: <strong>{adminPin}</strong></p>
           </div>
-
-          {/* Lista de emails cadastrados */}
-          <div className="space-y-2 mb-4">
-            {(recoveryEmails || []).length === 0 ? (
-              <p className={`text-xs font-bold uppercase text-center py-3 border-2 border-dashed rounded-lg ${darkMode ? 'text-zinc-500 border-zinc-700' : 'text-zinc-400 border-zinc-200'}`}>Nenhum e-mail cadastrado</p>
-            ) : (
-              recoveryEmails.map(item => (
-                <div key={item.id} className={`flex justify-between items-center p-3 rounded-lg border ${darkMode ? 'border-zinc-700 bg-zinc-900' : 'border-zinc-200 bg-zinc-50'}`}>
-                  <span className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-black'}`}>{item.email}</span>
-                  <button
-                    onClick={() => { setRecoveryEmails(recoveryEmails.filter(x => x.id !== item.id)); toast('E-mail removido'); }}
-                    className="text-zinc-400 hover:text-red-600 transition-colors p-1"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Adicionar novo email */}
           <form onSubmit={(e) => {
             e.preventDefault();
-            if (!emailInput) return;
-            const exists = (recoveryEmails || []).some(x => x.email.toLowerCase() === emailInput.toLowerCase().trim());
-            if (exists) { toast('E-mail já cadastrado'); return; }
-            setRecoveryEmails([...recoveryEmails, { id: 'e' + Date.now(), email: emailInput.trim() }]);
-            setEmailInput('');
-            toast('E-mail adicionado!');
+            if (!newPinInput || newPinInput.length < 4) { toast('PIN deve ter pelo menos 4 caracteres'); return; }
+            setAdminPin(newPinInput);
+            setNewPinInput('');
+            toast('PIN atualizado!');
           }} className="flex gap-3">
-            <input type="email" placeholder="seu@gmail.com" value={emailInput} onChange={e => setEmailInput(e.target.value)} className={`flex-1 p-3 border rounded-lg font-bold text-sm outline-none ${darkMode ? 'bg-zinc-900 border-zinc-600 text-white placeholder-zinc-500 focus:border-white' : 'border-zinc-300 focus:border-black'}`} required />
-            <button type="submit" className="bg-black text-white font-bold py-3 px-6 rounded-lg uppercase tracking-wider hover:bg-zinc-800 transition-colors">Adicionar</button>
+            <input type="text" placeholder="Novo PIN" value={newPinInput} onChange={e => setNewPinInput(e.target.value)} className="flex-1 p-3 border border-zinc-300 rounded-lg font-bold text-sm outline-none focus:border-black" required minLength={4} />
+            <button type="submit" className="bg-black text-white font-bold py-3 px-6 rounded-lg uppercase tracking-wider hover:bg-zinc-800 transition-colors">Salvar PIN</button>
           </form>
-        </div>
-      </div>
-
-      {/* Configuração EmailJS */}
-      <div className="mt-8 mb-8">
-        <h3 className="text-lg font-black mb-6 text-black uppercase tracking-wider flex items-center gap-2">
-          <Mail className="w-6 h-6" /> Configuração de Envio de E-mail
-        </h3>
-        <div className={`rounded-2xl border shadow-sm p-6 ${darkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-300'}`}>
-          <div className={`border-l-4 p-4 rounded-lg mb-6 ${darkMode ? 'bg-yellow-900/20 border-yellow-500' : 'bg-yellow-50 border-yellow-400'}`}>
-            <p className={`text-sm font-bold uppercase mb-2 ${darkMode ? 'text-yellow-400' : 'text-yellow-700'}`}>⚙ Como configurar</p>
-            <ol className={`text-xs font-medium space-y-1 list-decimal list-inside ${darkMode ? 'text-yellow-300' : 'text-yellow-700'}`}>
-              <li>Acesse <strong>emailjs.com</strong> e crie uma conta gratuita</li>
-              <li>Adicione seu Gmail como serviço de e-mail (Email Services → Add New Service → Gmail)</li>
-              <li>Crie um template com as variáveis: <code>{'{{to_email}}'}</code>, <code>{'{{new_password}}'}</code>, <code>{'{{to_name}}'}</code></li>
-              <li>Copie o <strong>Service ID</strong>, <strong>Template ID</strong> e <strong>Public Key</strong> e cole abaixo</li>
-            </ol>
-          </div>
-          <div className="flex flex-col gap-3">
-            <input type="text" placeholder="Service ID" value={ejServiceId} onChange={e => setEjServiceId(e.target.value)} className={`p-3 border rounded-lg font-bold text-sm outline-none ${darkMode ? 'bg-zinc-900 border-zinc-600 text-white placeholder-zinc-500 focus:border-white' : 'border-zinc-300 focus:border-black'}`} />
-            <input type="text" placeholder="Template ID" value={ejTemplateId} onChange={e => setEjTemplateId(e.target.value)} className={`p-3 border rounded-lg font-bold text-sm outline-none ${darkMode ? 'bg-zinc-900 border-zinc-600 text-white placeholder-zinc-500 focus:border-white' : 'border-zinc-300 focus:border-black'}`} />
-            <input type="text" placeholder="Public Key" value={ejPublicKey} onChange={e => setEjPublicKey(e.target.value)} className={`p-3 border rounded-lg font-bold text-sm outline-none ${darkMode ? 'bg-zinc-900 border-zinc-600 text-white placeholder-zinc-500 focus:border-white' : 'border-zinc-300 focus:border-black'}`} />
-            <button
-              onClick={() => {
-                setEmailjsConfig({ serviceId: ejServiceId.trim(), templateId: ejTemplateId.trim(), publicKey: ejPublicKey.trim() });
-                toast('Configuração salva!');
-              }}
-              className="bg-black text-white font-bold py-3 rounded-lg uppercase tracking-wider hover:bg-zinc-800 transition-colors"
-            >
-              Salvar Configuração
-            </button>
-          </div>
         </div>
       </div>
 

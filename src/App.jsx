@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { initialBarbers, initialServices, initialProducts, initialCustomers, paymentMethods } from './constants/initialData.jsx';
 import { useFirestoreCollection, useFirestoreSetting } from './hooks/useFirestore';
+import { onAuthStateChanged, signOut, updatePassword } from 'firebase/auth';
+import { auth } from './firebase';
 import Sidebar from './components/Sidebar';
 import ToastContainer from './components/Toast';
 import DashboardView from './pages/DashboardView';
@@ -21,6 +23,23 @@ import { Menu, X, LogOut, Moon, Sun } from 'lucide-react';
 const SESSION_KEY = 'barbearia_session';
 const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 min de inatividade
 
+// Mapeamento de email → role (configurar com os emails reais dos usuários)
+const EMAIL_ROLE_MAP = {
+  // Adicione os emails cadastrados no Firebase Authentication aqui
+  // exemplo: 'cesar@gmail.com': 'cesar', 'rodrigo@gmail.com': 'rodrigo'
+};
+
+function getRoleFromEmail(email) {
+  if (!email) return null;
+  const lower = email.toLowerCase();
+  // Verifica mapeamento direto
+  if (EMAIL_ROLE_MAP[lower]) return EMAIL_ROLE_MAP[lower];
+  // Fallback: primeiro email cadastrado = cesar, demais = rodrigo
+  if (lower.includes('cesar') || lower.includes('césar')) return 'cesar';
+  if (lower.includes('rodrigo')) return 'rodrigo';
+  return 'cesar'; // proprietário por padrão
+}
+
 function getSession() {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY);
@@ -33,11 +52,12 @@ function getSession() {
 
 export default function App() {
   // --- ESTADOS DO SISTEMA ---
-  const [loggedIn, setLoggedIn] = useState(() => !!getSession());
-  const [userRole, setUserRole] = useState(() => getSession()?.role || null);
-  const [password, setPassword, passwordLoaded] = useFirestoreSetting('password', 'Bcesar@26');
-  const [recoveryEmails, setRecoveryEmails] = useFirestoreCollection('recoveryEmails', []);
-  const [emailjsConfig, setEmailjsConfig, emailjsLoaded] = useFirestoreSetting('emailjsConfig', { serviceId: '', templateId: '', publicKey: '' });
+  const [authLoading, setAuthLoading] = useState(true);
+  const [firebaseUser, setFirebaseUser] = useState(null);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  const [userRoles, setUserRoles] = useFirestoreSetting('userRoles', {});
+  const [adminPin, setAdminPin, adminPinLoaded] = useFirestoreSetting('adminPin', '1234');
   const [darkMode, setDarkMode] = useState(() => {
     const saved = sessionStorage.getItem('barbearia_darkMode');
     return saved === 'true';
@@ -46,6 +66,31 @@ export default function App() {
     const saved = sessionStorage.getItem('barbearia_hideValues');
     return saved === 'true';
   });
+
+  // Firebase Auth listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user);
+      setAuthLoading(false);
+      if (user) {
+        const role = userRoles[user.uid] || getRoleFromEmail(user.email);
+        setUserRole(role);
+        setLoggedIn(true);
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({ role, lastActivity: Date.now() }));
+        
+        // Rodrigo sempre inicia com valores ocultos por segurança
+        if (role === 'rodrigo') {
+          setHideValues(true);
+          sessionStorage.setItem('barbearia_hideValues', 'true');
+        }
+      } else {
+        setLoggedIn(false);
+        setUserRole(null);
+        sessionStorage.removeItem(SESSION_KEY);
+      }
+    });
+    return () => unsubscribe();
+  }, [userRoles]);
 
   // Persistir hideValues no sessionStorage
   useEffect(() => {
@@ -77,7 +122,6 @@ export default function App() {
       }
     };
     window.addEventListener('popstate', onPopState);
-    // Estado inicial no histórico
     if (!window.history.state?.tab) {
       window.history.replaceState({ tab: activeTab }, '');
     }
@@ -97,9 +141,7 @@ export default function App() {
     events.forEach(e => window.addEventListener(e, resetActivity));
     const interval = setInterval(() => {
       if (!getSession()) {
-        setLoggedIn(false);
-        setUserRole(null);
-        sessionStorage.removeItem(SESSION_KEY);
+        signOut(auth);
       }
     }, 10000);
     return () => {
@@ -108,22 +150,15 @@ export default function App() {
     };
   }, [loggedIn]);
 
-  const handleLogin = (role) => {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ role, lastActivity: Date.now() }));
-    setUserRole(role);
-    setLoggedIn(true);
-    const tab = role === 'rodrigo' ? 'rodrigo' : 'dashboard';
-    setActiveTab(tab);
-    sessionStorage.setItem('barbearia_activeTab', tab);
-    window.history.replaceState({ tab }, '');
-    // Rodrigo sempre inicia com valores ocultos por segurança
-    if (role === 'rodrigo') {
-      setHideValues(true);
-      sessionStorage.setItem('barbearia_hideValues', 'true');
+  // onAuthStateChanged já cuida do login, mas registramos log na primeira detecção
+  useEffect(() => {
+    if (loggedIn && userRole) {
+      const tab = userRole === 'rodrigo' ? 'rodrigo' : (sessionStorage.getItem('barbearia_activeTab') || 'dashboard');
+      setActiveTab(tab);
+      sessionStorage.setItem('barbearia_activeTab', tab);
+      window.history.replaceState({ tab }, '');
     }
-    // Registrar log de login
-    setLoginLogs(prev => [...prev, { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), role, action: 'login', timestamp: new Date() }]);
-  };
+  }, [loggedIn, userRole]);
   
   // Bancos de dados editáveis (sincronizados com Firebase)
   const [barbers, setBarbers, barbersLoaded] = useFirestoreCollection('barbers', initialBarbers);
@@ -146,13 +181,25 @@ export default function App() {
   // Login Logs (sincronizado com Firebase)
   const [loginLogs, setLoginLogs, loginLogsLoaded] = useFirestoreCollection('loginLogs', []);
 
-  const dataLoaded = servicesLoaded && productsLoaded && customersLoaded && transactionsLoaded && passwordLoaded && barbersLoaded;
+  const dataLoaded = servicesLoaded && productsLoaded && customersLoaded && transactionsLoaded && barbersLoaded;
 
   const lowStockCount = products.filter(p => p.stock <= p.minStock).length;
 
+  // --- TELA DE CARREGAMENTO AUTH ---
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-black">
+        <div className="text-center">
+          <div className="w-10 h-10 border-3 border-white border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-white font-bold uppercase tracking-wider text-xs">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
   // --- TELA DE LOGIN ---
   if (!loggedIn) {
-    return <LoginScreen onLogin={handleLogin} cesarPassword={password} rodrigoPassword="Rodrigo10B26" recoveryEmails={recoveryEmails} setRecoveryPassword={setPassword} emailjsConfig={emailjsConfig} />;
+    return <LoginScreen onLogin={() => {}} />;
   }
 
   if (!dataLoaded) {
@@ -184,7 +231,7 @@ export default function App() {
 
       {/* Sidebar */}
       <div className={`fixed md:static inset-y-0 left-0 z-40 transform transition-transform duration-200 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} lowStockCount={lowStockCount} userRole={userRole} onLogout={() => { setLoginLogs(prev => [...prev, { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), role: userRole, action: 'logout', timestamp: new Date() }]); sessionStorage.removeItem(SESSION_KEY); setLoggedIn(false); setUserRole(null); }} />
+        <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} lowStockCount={lowStockCount} userRole={userRole} onLogout={() => { setLoginLogs(prev => [...prev, { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), role: userRole, action: 'logout', timestamp: new Date() }]); signOut(auth); }} />
       </div>
 
       <main className={`flex-1 overflow-auto min-w-0 ${darkMode ? 'bg-zinc-900' : 'bg-zinc-100'}`}>
@@ -205,7 +252,7 @@ export default function App() {
               {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
             <button
-              onClick={() => { setLoginLogs(prev => [...prev, { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), role: userRole, action: 'logout', timestamp: new Date() }]); sessionStorage.removeItem(SESSION_KEY); setLoggedIn(false); setUserRole(null); }}
+              onClick={() => { setLoginLogs(prev => [...prev, { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), role: userRole, action: 'logout', timestamp: new Date() }]); signOut(auth); }}
               className="bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2 px-3 md:px-4 rounded-lg text-xs uppercase tracking-wider flex items-center gap-1"
             >
               <LogOut className="w-4 h-4" /> Sair
@@ -237,16 +284,25 @@ export default function App() {
                 className="p-2 border border-zinc-300 rounded font-bold focus:border-black outline-none text-sm"
               />
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (newPasswordInput.length < 6) {
                     setPasswordMsg('Mínimo 6 caracteres');
                     return;
                   }
-                  setPassword(newPasswordInput);
-                  setNewPasswordInput('');
-                  setShowChangePassword(false);
-                  setPasswordMsg('Senha alterada!');
-                  setTimeout(() => setPasswordMsg(''), 3000);
+                  try {
+                    await updatePassword(auth.currentUser, newPasswordInput);
+                    setNewPasswordInput('');
+                    setShowChangePassword(false);
+                    setPasswordMsg('Senha alterada!');
+                    setTimeout(() => setPasswordMsg(''), 3000);
+                  } catch (err) {
+                    if (err.code === 'auth/requires-recent-login') {
+                      setPasswordMsg('Faça login novamente para alterar a senha');
+                    } else {
+                      setPasswordMsg('Erro ao alterar senha');
+                    }
+                    setTimeout(() => setPasswordMsg(''), 5000);
+                  }
                 }}
                 className="bg-black text-white font-bold py-2 px-4 rounded-lg text-xs uppercase tracking-wider hover:bg-zinc-800"
               >
@@ -374,7 +430,7 @@ export default function App() {
             hideValues={hideValues}
             loginLogs={loginLogs}
             setLoginLogs={setLoginLogs}
-            cesarPassword={password}
+            cesarPassword={adminPin}
           />
         )}
 
@@ -401,12 +457,10 @@ export default function App() {
             manualTransactions={manualTransactions}
             setManualTransactions={setManualTransactions}
             standbyList={standbyList}
-            recoveryEmails={recoveryEmails}
-            setRecoveryEmails={setRecoveryEmails}
             darkMode={darkMode}
-            cesarPassword={password}
-            emailjsConfig={emailjsConfig}
-            setEmailjsConfig={setEmailjsConfig}
+            cesarPassword={adminPin}
+            adminPin={adminPin}
+            setAdminPin={setAdminPin}
             userRole={userRole}
             loginLogs={loginLogs}
             setLoginLogs={setLoginLogs}
