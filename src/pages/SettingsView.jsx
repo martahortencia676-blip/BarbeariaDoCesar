@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Scissors, Beer, Trash2, Calendar, Cloud } from 'lucide-react';
+import { toast } from '../components/Toast';
 import { generateId } from '../utils/helpers';
 
 export default function SettingsView({
@@ -32,6 +33,7 @@ export default function SettingsView({
     setSName('');
     setSPrice('');
     setSDur('');
+    toast('Serviço adicionado');
   };
 
   const handleAddProduct = (e) => {
@@ -41,6 +43,7 @@ export default function SettingsView({
     setPName('');
     setPPrice('');
     setPStock('');
+    toast('Produto adicionado');
   };
 
   return (
@@ -73,7 +76,7 @@ export default function SettingsView({
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="font-black text-black text-sm whitespace-nowrap">R$ {s.price.toFixed(2)}</span>
-                    <button onClick={() => setServices(services.filter(x => x.id !== s.id))} className="text-zinc-400 hover:text-red-600 transition-colors"><Trash2 className="w-5 h-5"/></button>
+                    <button onClick={() => { setServices(services.filter(x => x.id !== s.id)); toast('Serviço removido'); }} className="text-zinc-400 hover:text-red-600 transition-colors"><Trash2 className="w-5 h-5"/></button>
                   </div>
                 </div>
               ))
@@ -105,7 +108,7 @@ export default function SettingsView({
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="font-black text-black text-sm whitespace-nowrap">R$ {p.price.toFixed(2)}</span>
-                    <button onClick={() => setProducts(products.filter(x => x.id !== p.id))} className="text-zinc-400 hover:text-red-600 transition-colors"><Trash2 className="w-5 h-5"/></button>
+                    <button onClick={() => { setProducts(products.filter(x => x.id !== p.id)); toast('Produto removido'); }} className="text-zinc-400 hover:text-red-600 transition-colors"><Trash2 className="w-5 h-5"/></button>
                   </div>
                 </div>
               ))
@@ -282,6 +285,34 @@ export default function SettingsView({
               </label>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Limpar Dados do Firebase */}
+      <div className="mt-8 mb-8">
+        <h3 className="text-lg font-black mb-6 text-black uppercase tracking-wider flex items-center gap-2">
+          <Trash2 className="w-6 h-6" /> Limpar Dados
+        </h3>
+        <div className="bg-white rounded-2xl border border-zinc-300 shadow-sm p-6">
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg mb-6">
+            <p className="text-sm text-red-700 font-bold uppercase mb-2">⚠ Atenção</p>
+            <p className="text-sm text-red-700 font-medium">Essa ação apaga todos os dados operacionais (clientes, transações, agendamentos, cupons e fluxo manual). Os serviços e produtos serão mantidos.</p>
+          </div>
+          <button
+            onClick={() => {
+              if (confirm('Tem certeza que deseja apagar TODOS os dados operacionais? Essa ação não pode ser desfeita.')) {
+                setCustomers([]);
+                setTransactions([]);
+                setAppointments([]);
+                setCoupons([]);
+                setManualTransactions([]);
+                toast('Dados limpos com sucesso!');
+              }
+            }}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg uppercase tracking-wider transition-colors"
+          >
+            Limpar Todos os Dados Operacionais
+          </button>
         </div>
       </div>
       </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ShoppingCart, Scissors, Beer, Check, Award, Trash2, Search, X } from 'lucide-react';
+import { toast } from '../components/Toast';
 import { generateId, getCustomer } from '../utils/helpers';
 import CheckoutModal from '../components/CheckoutModal';
 
@@ -164,6 +165,7 @@ export default function POSView({
     setCheckoutModalOpen(false);
     setSelectedApptId('');
     setSelectedCouponId('');
+    toast('Venda finalizada com sucesso!');
   };
 
   return (

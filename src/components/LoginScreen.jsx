@@ -1,14 +1,17 @@
 import { useState } from 'react';
 
-export default function LoginScreen({ onLogin, currentPassword }) {
+export default function LoginScreen({ onLogin, cesarPassword, rodrigoPassword }) {
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (input === currentPassword) {
+    if (input === cesarPassword) {
       setError('');
-      onLogin();
+      onLogin('cesar');
+    } else if (input === rodrigoPassword) {
+      setError('');
+      onLogin('rodrigo');
     } else {
       setError('Senha incorreta');
     }

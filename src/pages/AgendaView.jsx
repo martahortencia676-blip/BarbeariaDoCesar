@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Plus, Clock, Calendar, Trash2, Play } from 'lucide-react';
+import { toast } from '../components/Toast';
 import { generateId, getCustomer, checkTimeConflict, formatDate } from '../utils/helpers';
 import { formatPhoneNumber, unformatPhoneNumber } from '../utils/phoneAndDate';
 
@@ -145,7 +146,7 @@ export default function AgendaView({
 
     const updatedAppts = [...appointments, newAppt].sort((a, b) => a.time.localeCompare(b.time));
     setAppointments(updatedAppts);
-    setApptError('✓ Agendamento criado com sucesso!');
+    toast('Agendamento criado com sucesso!');
     
     setNewApptName('');
     setNewApptPhone('');
@@ -160,6 +161,7 @@ export default function AgendaView({
 
   const cancelAppointment = (apptId) => {
     setAppointments(appointments.filter(a => a.id !== apptId));
+    toast('Agendamento cancelado');
   };
 
   const handleAddStandby = (e) => {
@@ -168,6 +170,7 @@ export default function AgendaView({
     setStandbyList([...standbyList, { id: generateId(), name: standbyName, phone: standbyPhone }]);
     setStandbyName('');
     setStandbyPhone('');
+    toast('Adicionado à lista de espera');
   };
 
   const promoteStandbyToAppt = (standby) => {
@@ -194,6 +197,7 @@ export default function AgendaView({
       ...activeTabs,
       [apptId]: { items: comandaInicial, discount: 0 }
     });
+    toast('Atendimento iniciado');
   };
 
   const today = new Date().toISOString().split('T')[0];

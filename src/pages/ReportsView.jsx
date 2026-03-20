@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Wallet, Scissors, ArrowUpCircle, ArrowDownCircle, TrendingUp, Calendar } from 'lucide-react';
+import { Wallet, Scissors, ArrowUpCircle, ArrowDownCircle, TrendingUp, Calendar, Trash2 } from 'lucide-react';
+import { toast } from '../components/Toast';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { generateId, formatDate } from '../utils/helpers';
 
@@ -31,6 +32,7 @@ export default function ReportsView({
     setManualTransactions([...manualTransactions, newTrans]);
     setManualDesc('');
     setManualValue('');
+    toast('Registro adicionado');
   };
 
   // Data atual
@@ -304,9 +306,14 @@ export default function ReportsView({
                         <p className="text-xs text-zinc-500 font-medium">{t.date ? new Date(t.date).toLocaleDateString('pt-BR') : 'Hoje'}</p>
                       </div>
                     </div>
-                    <span className={`font-black text-sm whitespace-nowrap ${t.type === 'in' ? 'text-green-600' : 'text-red-600'}`}>
-                      {t.type === 'in' ? '+' : '-'} R$ {t.amount.toFixed(2)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-black text-sm whitespace-nowrap ${t.type === 'in' ? 'text-green-600' : 'text-red-600'}`}>
+                        {t.type === 'in' ? '+' : '-'} R$ {t.amount.toFixed(2)}
+                      </span>
+                      <button onClick={() => { setManualTransactions(manualTransactions.filter(x => x.id !== t.id)); toast('Registro removido'); }} className="text-zinc-400 hover:text-red-600 transition-colors shrink-0">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 ))
               )}

@@ -4,7 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const RODRIGO_ID = 'b2';
 
-export default function RodrigoPage({ transactions, customers, services }) {
+export default function RodrigoPage({ transactions, customers, services, hideServiceValues = false }) {
   const today = new Date();
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
@@ -198,8 +198,8 @@ export default function RodrigoPage({ transactions, customers, services }) {
                   <th className="p-3 font-black">Horário</th>
                   <th className="p-3 font-black">Cliente</th>
                   <th className="p-3 font-black">Serviço</th>
-                  <th className="p-3 font-black text-right">Valor Serviço</th>
-                  <th className="p-3 font-black text-right">Minha Parte (50%)</th>
+                  {!hideServiceValues && <th className="p-3 font-black text-right">Valor Serviço</th>}
+                  <th className="p-3 font-black text-right">{hideServiceValues ? 'Minha Comissão' : 'Minha Parte (50%)'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200">
@@ -212,7 +212,7 @@ export default function RodrigoPage({ transactions, customers, services }) {
                       <td className="p-3 font-medium">{new Date(item.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</td>
                       <td className="p-3 font-medium">{item.customerName}</td>
                       <td className="p-3 font-bold">{item.name}</td>
-                      <td className="p-3 font-bold text-right">R$ {item.price.toFixed(2)}</td>
+                      {!hideServiceValues && <td className="p-3 font-bold text-right">R$ {item.price.toFixed(2)}</td>}
                       <td className="p-3 font-black text-right text-green-700">R$ {(item.price * 0.5).toFixed(2)}</td>
                     </tr>
                   ))
@@ -222,7 +222,7 @@ export default function RodrigoPage({ transactions, customers, services }) {
                 <tfoot>
                   <tr className="bg-zinc-100 font-black text-sm">
                     <td colSpan={4} className="p-3 uppercase">Total do Mês</td>
-                    <td className="p-3 text-right">R$ {totalServices.toFixed(2)}</td>
+                    {!hideServiceValues && <td className="p-3 text-right">R$ {totalServices.toFixed(2)}</td>}
                     <td className="p-3 text-right text-green-700">R$ {rodrigoCommission.toFixed(2)}</td>
                   </tr>
                 </tfoot>

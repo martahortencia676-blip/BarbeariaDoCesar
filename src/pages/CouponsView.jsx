@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Ticket, Plus, Trash2, Users } from 'lucide-react';
+import { toast } from '../components/Toast';
 import { generateId } from '../utils/helpers';
 
 export default function CouponsView({
@@ -33,10 +34,12 @@ export default function CouponsView({
     setCValue('');
     setCCustomerId('');
     setCDescription('');
+    toast('Cupom criado com sucesso!');
   };
 
   const handleDeleteCoupon = (couponId) => {
     setCoupons(coupons.filter(c => c.id !== couponId));
+    toast('Cupom removido');
   };
 
   const getCustomerName = (customerId) => {

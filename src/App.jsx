@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { initialBarbers, initialServices, initialProducts, initialCustomers, paymentMethods } from './constants/initialData.jsx';
 import { useFirestoreCollection, useFirestoreSetting } from './hooks/useFirestore';
 import Sidebar from './components/Sidebar';
+import ToastContainer from './components/Toast';
 import DashboardView from './pages/DashboardView';
 import AgendaView from './pages/AgendaView';
 import POSView from './pages/POSView';
@@ -15,18 +16,22 @@ import LoginScreen from './components/LoginScreen.jsx';
 import { Menu, X } from 'lucide-react';
 
 const SESSION_KEY = 'barbearia_session';
-const SESSION_DURATION = 5 * 60 * 1000; // 5 minutos
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 min de inatividade
 
-function isSessionValid() {
-  const session = sessionStorage.getItem(SESSION_KEY);
-  if (!session) return false;
-  const loginTime = parseInt(session, 10);
-  return Date.now() - loginTime < SESSION_DURATION;
+function getSession() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (Date.now() - data.lastActivity > INACTIVITY_TIMEOUT) return null;
+    return data;
+  } catch { return null; }
 }
 
 export default function App() {
   // --- ESTADOS DO SISTEMA ---
-  const [loggedIn, setLoggedIn] = useState(isSessionValid);
+  const [loggedIn, setLoggedIn] = useState(() => !!getSession());
+  const [userRole, setUserRole] = useState(() => getSession()?.role || null);
   const [password, setPassword, passwordLoaded] = useFirestoreSetting('password', 'Bcesar@26');
   const [hideValues, setHideValues] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -35,22 +40,33 @@ export default function App() {
   const [newPasswordInput, setNewPasswordInput] = useState('');
   const [passwordMsg, setPasswordMsg] = useState('');
 
-  // Auto-logout após 5 minutos
+  // Auto-logout por inatividade (30 min sem interação)
   useEffect(() => {
     if (!loggedIn) return;
-    const checkSession = () => {
-      if (!isSessionValid()) {
+    const resetActivity = () => {
+      const s = getSession();
+      if (s) sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ...s, lastActivity: Date.now() }));
+    };
+    const events = ['mousedown', 'keydown', 'touchstart', 'scroll'];
+    events.forEach(e => window.addEventListener(e, resetActivity));
+    const interval = setInterval(() => {
+      if (!getSession()) {
         setLoggedIn(false);
+        setUserRole(null);
         sessionStorage.removeItem(SESSION_KEY);
       }
+    }, 10000);
+    return () => {
+      events.forEach(e => window.removeEventListener(e, resetActivity));
+      clearInterval(interval);
     };
-    const interval = setInterval(checkSession, 10000); // checa a cada 10s
-    return () => clearInterval(interval);
   }, [loggedIn]);
 
-  const handleLogin = () => {
-    sessionStorage.setItem(SESSION_KEY, String(Date.now()));
+  const handleLogin = (role) => {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ role, lastActivity: Date.now() }));
+    setUserRole(role);
     setLoggedIn(true);
+    if (role === 'rodrigo') setActiveTab('rodrigo');
   };
   
   // Bancos de dados editáveis (sincronizados com Firebase)
@@ -77,7 +93,7 @@ export default function App() {
 
   // --- TELA DE LOGIN ---
   if (!loggedIn) {
-    return <LoginScreen onLogin={handleLogin} currentPassword={password} />;
+    return <LoginScreen onLogin={handleLogin} cesarPassword={password} rodrigoPassword="Rodrigo10B26" />;
   }
 
   if (!dataLoaded) {
@@ -106,7 +122,7 @@ export default function App() {
 
       {/* Sidebar */}
       <div className={`fixed md:static inset-y-0 left-0 z-40 transform transition-transform duration-200 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} lowStockCount={lowStockCount} />
+        <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} lowStockCount={lowStockCount} userRole={userRole} />
       </div>
 
       <main className="flex-1 overflow-auto bg-zinc-100 min-w-0">
@@ -118,6 +134,7 @@ export default function App() {
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
+          {userRole === 'cesar' && (
           <div className="flex flex-wrap items-center gap-2 ml-auto">
             <button
               onClick={() => setHideValues(v => !v)}
@@ -132,7 +149,8 @@ export default function App() {
               Alterar senha
             </button>
           </div>
-          {showChangePassword && (
+          )}
+          {userRole === 'cesar' && showChangePassword && (
             <div className="w-full flex flex-wrap items-center gap-2 mt-2">
               <input
                 type="password"
@@ -160,7 +178,7 @@ export default function App() {
               {passwordMsg && <span className="text-xs font-bold text-green-600">{passwordMsg}</span>}
             </div>
           )}
-          {!showChangePassword && passwordMsg && <span className="text-xs font-bold text-green-600">{passwordMsg}</span>}
+          {userRole === 'cesar' && !showChangePassword && passwordMsg && <span className="text-xs font-bold text-green-600">{passwordMsg}</span>}
         </div>
         {activeTab === 'dashboard' && (
           <DashboardView
@@ -252,6 +270,7 @@ export default function App() {
             transactions={transactions}
             customers={customers}
             services={services}
+            hideServiceValues={userRole === 'rodrigo'}
           />
         )}
         
@@ -274,6 +293,7 @@ export default function App() {
           />
         )}
       </main>
+      <ToastContainer />
     </div>
   );
 }

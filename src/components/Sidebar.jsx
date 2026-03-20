@@ -1,6 +1,6 @@
 import { Calendar, ShoppingCart, BarChart3, Settings, Users, LayoutGrid, Ticket, Award, User } from 'lucide-react';
 
-export default function Sidebar({ activeTab, setActiveTab, lowStockCount }) {
+export default function Sidebar({ activeTab, setActiveTab, lowStockCount, userRole }) {
   return (
     <nav className="w-64 md:w-20 lg:w-64 bg-black text-white flex flex-col h-full shadow-xl">
       <div className="p-4 lg:p-6 flex flex-col items-center gap-3 border-b border-zinc-800">
@@ -22,6 +22,11 @@ export default function Sidebar({ activeTab, setActiveTab, lowStockCount }) {
       </div>
 
       <div className="flex-1 py-4 flex flex-col gap-1 px-3 overflow-y-auto">
+        {userRole === 'rodrigo' ? (
+          <button onClick={() => setActiveTab('rodrigo')} className={`flex items-center gap-3 p-3 rounded-xl font-bold uppercase text-sm tracking-wider transition-colors ${activeTab === 'rodrigo' ? 'bg-white text-black' : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'}`}>
+            <User className="w-5 h-5 shrink-0" /><span className="md:hidden lg:block">Meu Desempenho</span>
+          </button>
+        ) : (<>
         <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-3 p-3 rounded-xl font-bold uppercase text-sm tracking-wider transition-colors ${activeTab === 'dashboard' ? 'bg-white text-black' : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'}`}>
           <LayoutGrid className="w-5 h-5 shrink-0" /><span className="md:hidden lg:block">Dashboard</span>
         </button>
@@ -61,6 +66,7 @@ export default function Sidebar({ activeTab, setActiveTab, lowStockCount }) {
           </div>
           <span className="md:hidden lg:block">Ajustes</span>
         </button>
+        </>)}
       </div>
     </nav>
   );

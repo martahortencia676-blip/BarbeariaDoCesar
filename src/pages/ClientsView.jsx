@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Users, Plus, Trash2, Eye, Calendar, Phone, Mail, Gift } from 'lucide-react';
+import { Users, Plus, Trash2, Eye, Calendar, Phone, Mail, Gift, Pencil, Save, XCircle } from 'lucide-react';
+import { toast } from '../components/Toast';
 import { formatPhoneNumber, unformatPhoneNumber, calculateAge, isBirthdayToday, generateWhatsAppLink, getMonthCutCount } from '../utils/phoneAndDate';
 import { generateId, formatDate } from '../utils/helpers';
 
@@ -17,6 +18,8 @@ export default function ClientsView({
   const [newBirthDate, setNewBirthDate] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newNotes, setNewNotes] = useState('');
+  const [editMode, setEditMode] = useState(false);
+  const [editData, setEditData] = useState({});
 
   const handlePhoneChange = (e) => {
     const input = e.target.value;
@@ -28,6 +31,7 @@ export default function ClientsView({
     if (confirm('Tem certeza que deseja deletar este cliente?')) {
       setCustomers(customers.filter(c => c.id !== clientId));
       setSelectedClientId(null);
+      toast('Cliente removido');
     }
   };
 
@@ -74,9 +78,32 @@ export default function ClientsView({
     setNewEmail('');
     setNewNotes('');
     setShowNewClientForm(false);
+    toast('Cliente cadastrado com sucesso!');
   };
 
   const selectedClient = customers.find(c => c.id === selectedClientId);
+
+  const startEdit = () => {
+    setEditData({
+      name: selectedClient.name,
+      phone: selectedClient.phone,
+      birthDate: selectedClient.birthDate || '',
+      email: selectedClient.email || '',
+      notes: selectedClient.notes || '',
+    });
+    setEditMode(true);
+  };
+
+  const saveEdit = () => {
+    setCustomers(customers.map(c =>
+      c.id === selectedClient.id ? { ...c, ...editData } : c
+    ));
+    setEditMode(false);
+    toast('Cliente atualizado com sucesso!');
+  };
+
+  const cancelEdit = () => setEditMode(false);
+
   const clientCuts = selectedClient ? transactions.filter(t => t.customerId === selectedClient.id && t.items.some(i => i.type === 'service')) : [];
   const monthCutCount = selectedClient ? getMonthCutCount(clientCuts) : 0;
   const age = selectedClient && selectedClient.birthDate ? calculateAge(selectedClient.birthDate) : null;
@@ -219,6 +246,14 @@ export default function ClientsView({
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
+                  {!editMode && (
+                  <button
+                    onClick={startEdit}
+                    className="text-blue-400 hover:text-blue-300 p-2 hover:bg-zinc-800 rounded transition-colors"
+                  >
+                    <Pencil className="w-5 h-5" />
+                  </button>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -236,6 +271,34 @@ export default function ClientsView({
               {/* Informações Pessoais */}
               <div className="bg-white p-6 rounded-xl border border-zinc-300">
                 <h4 className="font-black text-black mb-4 uppercase text-sm tracking-wider">Informações Pessoais</h4>
+                {editMode ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs text-zinc-500 font-bold uppercase">Nome</label>
+                      <input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="w-full p-2 border border-zinc-300 rounded focus:border-black outline-none font-bold text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-zinc-500 font-bold uppercase">Telefone</label>
+                      <input type="text" value={editData.phone} onChange={e => setEditData({...editData, phone: formatPhoneNumber(e.target.value)})} className="w-full p-2 border border-zinc-300 rounded focus:border-black outline-none font-bold text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-zinc-500 font-bold uppercase">Data de Nascimento</label>
+                      <input type="date" value={editData.birthDate} onChange={e => setEditData({...editData, birthDate: e.target.value})} className="w-full p-2 border border-zinc-300 rounded focus:border-black outline-none font-bold text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-zinc-500 font-bold uppercase">Email</label>
+                      <input type="email" value={editData.email} onChange={e => setEditData({...editData, email: e.target.value})} className="w-full p-2 border border-zinc-300 rounded focus:border-black outline-none font-bold text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-zinc-500 font-bold uppercase">Notas</label>
+                      <textarea value={editData.notes} onChange={e => setEditData({...editData, notes: e.target.value})} className="w-full p-2 border border-zinc-300 rounded focus:border-black outline-none font-bold text-sm resize-none" rows="2" />
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <button onClick={saveEdit} className="flex-1 bg-black hover:bg-zinc-800 text-white py-2 rounded font-bold uppercase text-xs transition-colors flex items-center justify-center gap-1"><Save className="w-4 h-4" /> Salvar</button>
+                      <button onClick={cancelEdit} className="flex-1 bg-zinc-200 hover:bg-zinc-300 text-black py-2 rounded font-bold uppercase text-xs transition-colors flex items-center justify-center gap-1"><XCircle className="w-4 h-4" /> Cancelar</button>
+                    </div>
+                  </div>
+                ) : (
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 pb-3 border-b border-zinc-200">
                     <Phone className="w-5 h-5 text-black" />
@@ -272,8 +335,9 @@ export default function ClientsView({
                     <p className="font-bold text-black">{formatDate(selectedClient.joinDate)}</p>
                   </div>
                 </div>
+                )}
 
-                {selectedClient.notes && (
+                {!editMode && selectedClient.notes && (
                   <div className="mt-4 pt-4 border-t border-zinc-200">
                     <p className="text-xs text-zinc-500 font-bold uppercase mb-2">Notas</p>
                     <p className="text-sm text-zinc-700 bg-zinc-50 p-2 rounded">{selectedClient.notes}</p>
