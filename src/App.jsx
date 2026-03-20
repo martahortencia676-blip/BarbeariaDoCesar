@@ -36,7 +36,8 @@ export default function App() {
   const [loggedIn, setLoggedIn] = useState(() => !!getSession());
   const [userRole, setUserRole] = useState(() => getSession()?.role || null);
   const [password, setPassword, passwordLoaded] = useFirestoreSetting('password', 'Bcesar@26');
-  const [recoveryEmail, setRecoveryEmail, recoveryEmailLoaded] = useFirestoreSetting('recoveryEmail', '');
+  const [recoveryEmails, setRecoveryEmails] = useFirestoreCollection('recoveryEmails', []);
+  const [emailjsConfig, setEmailjsConfig, emailjsLoaded] = useFirestoreSetting('emailjsConfig', { serviceId: '', templateId: '', publicKey: '' });
   const [darkMode, setDarkMode] = useState(() => {
     const saved = sessionStorage.getItem('barbearia_darkMode');
     return saved === 'true';
@@ -151,7 +152,7 @@ export default function App() {
 
   // --- TELA DE LOGIN ---
   if (!loggedIn) {
-    return <LoginScreen onLogin={handleLogin} cesarPassword={password} rodrigoPassword="Rodrigo10B26" recoveryEmail={recoveryEmail} setRecoveryPassword={setPassword} />;
+    return <LoginScreen onLogin={handleLogin} cesarPassword={password} rodrigoPassword="Rodrigo10B26" recoveryEmails={recoveryEmails} setRecoveryPassword={setPassword} emailjsConfig={emailjsConfig} />;
   }
 
   if (!dataLoaded) {
@@ -393,9 +394,12 @@ export default function App() {
             manualTransactions={manualTransactions}
             setManualTransactions={setManualTransactions}
             standbyList={standbyList}
-            recoveryEmail={recoveryEmail}
-            setRecoveryEmail={setRecoveryEmail}
+            recoveryEmails={recoveryEmails}
+            setRecoveryEmails={setRecoveryEmails}
             darkMode={darkMode}
+            cesarPassword={password}
+            emailjsConfig={emailjsConfig}
+            setEmailjsConfig={setEmailjsConfig}
           />
         )}
       </main>

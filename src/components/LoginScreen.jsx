@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Lock, Mail, ArrowLeft } from 'lucide-react';
+import { Lock, Mail, ArrowLeft, Loader2 } from 'lucide-react';
+import emailjs from '@emailjs/browser';
 
-export default function LoginScreen({ onLogin, cesarPassword, rodrigoPassword, recoveryEmail, setRecoveryPassword }) {
+export default function LoginScreen({ onLogin, cesarPassword, rodrigoPassword, recoveryEmails, setRecoveryPassword, emailjsConfig }) {
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotMsg, setForgotMsg] = useState('');
+  const [sending, setSending] = useState(false);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -21,20 +23,46 @@ export default function LoginScreen({ onLogin, cesarPassword, rodrigoPassword, r
     }
   };
 
-  const handleForgotPassword = (e) => {
+  const handleForgotPassword = async (e) => {
     e.preventDefault();
     if (!forgotEmail) return;
-    if (!recoveryEmail) {
-      setForgotMsg('Nenhum e-mail de recuperação cadastrado. Entre em contato com o suporte.');
+
+    const emails = (recoveryEmails || []).map(e => e.email?.toLowerCase().trim());
+    if (emails.length === 0) {
+      setForgotMsg('Nenhum e-mail de recuperação cadastrado. Entre em contato com o proprietário.');
       return;
     }
-    if (forgotEmail.toLowerCase().trim() === recoveryEmail.toLowerCase().trim()) {
+
+    if (!emails.includes(forgotEmail.toLowerCase().trim())) {
+      setForgotMsg('E-mail não corresponde a nenhum cadastrado.');
+      return;
+    }
+
+    if (!emailjsConfig?.serviceId || !emailjsConfig?.templateId || !emailjsConfig?.publicKey) {
+      setForgotMsg('Serviço de e-mail não configurado. Entre em contato com o proprietário.');
+      return;
+    }
+
+    setSending(true);
+    try {
       const tempPass = 'Cesar' + Math.floor(1000 + Math.random() * 9000);
+      await emailjs.send(
+        emailjsConfig.serviceId,
+        emailjsConfig.templateId,
+        {
+          to_email: forgotEmail.trim(),
+          new_password: tempPass,
+          to_name: 'César',
+        },
+        emailjsConfig.publicKey
+      );
       setRecoveryPassword(tempPass);
-      setForgotMsg(`Senha redefinida com sucesso! Sua nova senha temporária é: ${tempPass}`);
+      setForgotMsg('Nova senha enviada para o seu e-mail! Verifique sua caixa de entrada.');
       setForgotEmail('');
-    } else {
-      setForgotMsg('E-mail não corresponde ao cadastrado.');
+    } catch (err) {
+      setForgotMsg('Erro ao enviar e-mail. Verifique a configuração do serviço.');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -73,7 +101,7 @@ export default function LoginScreen({ onLogin, cesarPassword, rodrigoPassword, r
                 <ArrowLeft className="w-3 h-3" /> Voltar
               </button>
               <h2 className="text-white font-black text-lg uppercase tracking-wider mb-2">Recuperar Senha</h2>
-              <p className="text-zinc-500 text-xs font-medium mb-6">Digite o e-mail de recuperação cadastrado para redefinir sua senha.</p>
+              <p className="text-zinc-500 text-xs font-medium mb-6">Digite seu e-mail cadastrado. Uma nova senha será enviada diretamente para o seu Gmail.</p>
               <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
@@ -91,8 +119,8 @@ export default function LoginScreen({ onLogin, cesarPassword, rodrigoPassword, r
                     {forgotMsg}
                   </div>
                 )}
-                <button type="submit" className="bg-white text-black font-black py-3 rounded-xl uppercase tracking-wider hover:bg-zinc-200 transition-colors text-sm">
-                  Redefinir Senha
+                <button type="submit" disabled={sending} className="bg-white text-black font-black py-3 rounded-xl uppercase tracking-wider hover:bg-zinc-200 transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50">
+                  {sending ? <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</> : 'Enviar Nova Senha'}
                 </button>
               </form>
             </>

@@ -21,9 +21,12 @@ export default function SettingsView({
   manualTransactions,
   setManualTransactions,
   standbyList,
-  recoveryEmail,
-  setRecoveryEmail,
-  darkMode
+  recoveryEmails,
+  setRecoveryEmails,
+  darkMode,
+  cesarPassword,
+  emailjsConfig,
+  setEmailjsConfig
 }) {
   const [sName, setSName] = useState('');
   const [sPrice, setSPrice] = useState('');
@@ -35,6 +38,108 @@ export default function SettingsView({
   const [bName, setBName] = useState('');
   const [bCommission, setBCommission] = useState('50');
   const [emailInput, setEmailInput] = useState('');
+  const [deletePasswordInput, setDeletePasswordInput] = useState('');
+  const [deletingBarber, setDeletingBarber] = useState(null);
+  const [ejServiceId, setEjServiceId] = useState(emailjsConfig?.serviceId || '');
+  const [ejTemplateId, setEjTemplateId] = useState(emailjsConfig?.templateId || '');
+  const [ejPublicKey, setEjPublicKey] = useState(emailjsConfig?.publicKey || '');
+
+  const generateBarberPDF = (barber) => {
+    const bTxns = transactions.filter(t => (t.items || []).some(i => i.barberId === barber.id));
+    const fmtH = (d) => { const dt = d instanceof Date ? d : new Date(d); return isNaN(dt) ? '-' : dt.toLocaleString('pt-BR'); };
+    const fmt = (d) => { const dt = d instanceof Date ? d : new Date(d); return isNaN(dt) ? '-' : dt.toLocaleDateString('pt-BR'); };
+    const now = new Date();
+
+    // Agrupar por dia, semana, mês e ano
+    const byPeriod = (groupFn) => {
+      const groups = {};
+      bTxns.forEach(t => {
+        const dt = t.date instanceof Date ? t.date : new Date(t.date);
+        if (isNaN(dt)) return;
+        const key = groupFn(dt);
+        if (!groups[key]) groups[key] = { count: 0, total: 0 };
+        const barberItems = (t.items || []).filter(i => i.barberId === barber.id);
+        groups[key].count += barberItems.length;
+        groups[key].total += barberItems.reduce((s, i) => s + (i.item?.price || 0), 0) * barber.commission;
+      });
+      return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+    };
+
+    const daily = byPeriod(d => d.toISOString().split('T')[0]);
+    const weekly = byPeriod(d => { const s = new Date(d); s.setDate(s.getDate() - s.getDay()); return s.toISOString().split('T')[0]; });
+    const monthly = byPeriod(d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+    const yearly = byPeriod(d => `${d.getFullYear()}`);
+
+    const totalServices = bTxns.reduce((s, t) => s + (t.items || []).filter(i => i.barberId === barber.id).length, 0);
+    const totalRevenue = bTxns.reduce((s, t) => s + (t.items || []).filter(i => i.barberId === barber.id).reduce((ss, i) => ss + (i.item?.price || 0), 0), 0);
+    const totalComm = totalRevenue * barber.commission;
+
+    const tbl = (headers, rows) => `<table><thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.length ? rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${headers.length}" style="text-align:center;color:#999">Sem dados</td></tr>`}</tbody></table>`;
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Relatório ${barber.name}</title>
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { font-family:Arial,sans-serif; font-size:11px; color:#222; padding:20px; }
+      h1 { font-size:18px; text-align:center; margin-bottom:4px; text-transform:uppercase; letter-spacing:2px; }
+      .sub { text-align:center; color:#666; margin-bottom:20px; font-size:10px; }
+      h2 { font-size:13px; background:#222; color:#fff; padding:5px 10px; margin:16px 0 6px; text-transform:uppercase; letter-spacing:1px; }
+      table { width:100%; border-collapse:collapse; margin-bottom:10px; }
+      th { background:#f0f0f0; text-align:left; padding:4px 6px; border:1px solid #ccc; font-size:10px; text-transform:uppercase; }
+      td { padding:3px 6px; border:1px solid #ddd; font-size:10px; }
+      tr:nth-child(even) { background:#fafafa; }
+      .stats { display:flex; gap:20px; margin:10px 0 20px; }
+      .stat { background:#f5f5f5; padding:10px 16px; border-radius:8px; text-align:center; flex:1; }
+      .stat strong { display:block; font-size:16px; }
+      .stat span { font-size:9px; text-transform:uppercase; color:#666; }
+      .footer { text-align:center; margin-top:20px; font-size:9px; color:#999; border-top:1px solid #ddd; padding-top:8px; }
+      @media print { body { padding:10px; } }
+    </style></head><body>
+    <h1>Relatório de Desempenho — ${barber.name}</h1>
+    <p class="sub">Comissão: ${(barber.commission*100).toFixed(0)}% | Gerado em ${fmt(now)} às ${now.toLocaleTimeString('pt-BR')}</p>
+    <div class="stats">
+      <div class="stat"><strong>${totalServices}</strong><span>Serviços</span></div>
+      <div class="stat"><strong>R$ ${totalRevenue.toFixed(2)}</strong><span>Faturamento</span></div>
+      <div class="stat"><strong>R$ ${totalComm.toFixed(2)}</strong><span>Comissão Total</span></div>
+      <div class="stat"><strong>${bTxns.length}</strong><span>Atendimentos</span></div>
+    </div>
+    <h2>Desempenho Diário</h2>
+    ${tbl(['Data', 'Serviços', 'Comissão'], daily.slice(0, 60).map(([k, v]) => [fmt(new Date(k + 'T12:00:00')), v.count, 'R$ ' + v.total.toFixed(2)]))}
+    <h2>Desempenho Semanal</h2>
+    ${tbl(['Semana de', 'Serviços', 'Comissão'], weekly.map(([k, v]) => ['Semana de ' + fmt(new Date(k + 'T12:00:00')), v.count, 'R$ ' + v.total.toFixed(2)]))}
+    <h2>Desempenho Mensal</h2>
+    ${tbl(['Mês', 'Serviços', 'Comissão'], monthly.map(([k, v]) => [k, v.count, 'R$ ' + v.total.toFixed(2)]))}
+    <h2>Desempenho Anual</h2>
+    ${tbl(['Ano', 'Serviços', 'Comissão'], yearly.map(([k, v]) => [k, v.count, 'R$ ' + v.total.toFixed(2)]))}
+    <h2>Últimas Transações (${Math.min(bTxns.length, 100)})</h2>
+    ${tbl(['Data', 'Cliente', 'Serviço', 'Valor', 'Comissão'], bTxns.slice(-100).reverse().map(t => {
+      const items = (t.items || []).filter(i => i.barberId === barber.id);
+      return [fmtH(t.date), t.customerName || '-', items.map(i => i.item?.name || '?').join(', '), 'R$ ' + items.reduce((s,i) => s + (i.item?.price || 0), 0).toFixed(2), 'R$ ' + (items.reduce((s,i) => s + (i.item?.price || 0), 0) * barber.commission).toFixed(2)];
+    }))}
+    <div class="footer">Barbearia do César — Relatório gerado automaticamente</div>
+    </body></html>`;
+
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+    w.onload = () => w.print();
+  };
+
+  const handleDeleteBarber = (barber) => {
+    setDeletingBarber(barber);
+    setDeletePasswordInput('');
+  };
+
+  const confirmDeleteBarber = () => {
+    if (deletePasswordInput !== cesarPassword) {
+      toast('Senha incorreta');
+      return;
+    }
+    generateBarberPDF(deletingBarber);
+    setBarbers(barbers.filter(x => x.id !== deletingBarber.id));
+    toast(`${deletingBarber.name} removido. PDF de desempenho gerado.`);
+    setDeletingBarber(null);
+    setDeletePasswordInput('');
+  };
 
   const handleAddService = (e) => {
     e.preventDefault();
@@ -275,12 +380,7 @@ export default function SettingsView({
                 </div>
                 {!b.isOwner && (
                   <button
-                    onClick={() => {
-                      if (confirm(`Tem certeza que deseja remover ${b.name}? Essa ação não pode ser desfeita.`)) {
-                        setBarbers(barbers.filter(x => x.id !== b.id));
-                        toast(`${b.name} removido`);
-                      }
-                    }}
+                    onClick={() => handleDeleteBarber(b)}
                     className="text-zinc-400 hover:text-red-600 transition-colors p-2"
                   >
                     <Trash2 className="w-5 h-5" />
@@ -289,6 +389,26 @@ export default function SettingsView({
               </div>
             ))}
           </div>
+
+          {/* Modal confirmação com senha */}
+          {deletingBarber && (
+            <div className={`p-4 mb-6 rounded-xl border-2 ${darkMode ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-300'}`}>
+              <p className={`text-sm font-bold mb-3 ${darkMode ? 'text-red-400' : 'text-red-700'}`}>
+                Confirme sua senha para remover <strong>{deletingBarber.name}</strong>. Um PDF com o desempenho completo será gerado automaticamente.
+              </p>
+              <div className="flex gap-3 items-center">
+                <input
+                  type="password"
+                  placeholder="Senha do César"
+                  value={deletePasswordInput}
+                  onChange={e => setDeletePasswordInput(e.target.value)}
+                  className={`flex-1 p-3 border rounded-lg font-bold text-sm outline-none ${darkMode ? 'bg-zinc-800 border-zinc-600 text-white placeholder-zinc-500' : 'border-zinc-300'}`}
+                />
+                <button onClick={confirmDeleteBarber} className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg text-xs uppercase transition-colors">Confirmar</button>
+                <button onClick={() => setDeletingBarber(null)} className={`font-bold py-3 px-4 rounded-lg text-xs uppercase transition-colors ${darkMode ? 'bg-zinc-700 text-zinc-300' : 'bg-zinc-200 text-zinc-600'}`}>Cancelar</button>
+              </div>
+            </div>
+          )}
           <form onSubmit={(e) => {
             e.preventDefault();
             if (!bName) return;
@@ -310,28 +430,80 @@ export default function SettingsView({
         </div>
       </div>
 
-      {/* E-mail de Recuperação */}
+      {/* E-mails de Recuperação */}
       <div className="mt-8 mb-8">
         <h3 className="text-lg font-black mb-6 text-black uppercase tracking-wider flex items-center gap-2">
-          <Mail className="w-6 h-6" /> E-mail de Recuperação
+          <Mail className="w-6 h-6" /> E-mails de Recuperação
         </h3>
         <div className={`rounded-2xl border shadow-sm p-6 ${darkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-300'}`}>
           <div className={`border-l-4 p-4 rounded-lg mb-6 ${darkMode ? 'bg-blue-900/20 border-blue-500' : 'bg-blue-50 border-blue-400'}`}>
-            <p className={`text-sm font-medium ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>Cadastre um e-mail para recuperar sua senha caso esqueça. Na tela de login, clique em "Esqueceu a senha?" e informe este e-mail.</p>
+            <p className={`text-sm font-medium ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>Cadastre e-mails para recuperação de senha. Quando clicar em "Esqueceu a senha?" na tela de login, a nova senha será enviada diretamente para o Gmail cadastrado.</p>
           </div>
-          {recoveryEmail && (
-            <p className={`text-sm font-bold mb-4 ${darkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>E-mail atual: <span className={`${darkMode ? 'text-white' : 'text-black'}`}>{recoveryEmail}</span></p>
-          )}
+
+          {/* Lista de emails cadastrados */}
+          <div className="space-y-2 mb-4">
+            {(recoveryEmails || []).length === 0 ? (
+              <p className={`text-xs font-bold uppercase text-center py-3 border-2 border-dashed rounded-lg ${darkMode ? 'text-zinc-500 border-zinc-700' : 'text-zinc-400 border-zinc-200'}`}>Nenhum e-mail cadastrado</p>
+            ) : (
+              recoveryEmails.map(item => (
+                <div key={item.id} className={`flex justify-between items-center p-3 rounded-lg border ${darkMode ? 'border-zinc-700 bg-zinc-900' : 'border-zinc-200 bg-zinc-50'}`}>
+                  <span className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-black'}`}>{item.email}</span>
+                  <button
+                    onClick={() => { setRecoveryEmails(recoveryEmails.filter(x => x.id !== item.id)); toast('E-mail removido'); }}
+                    className="text-zinc-400 hover:text-red-600 transition-colors p-1"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Adicionar novo email */}
           <form onSubmit={(e) => {
             e.preventDefault();
             if (!emailInput) return;
-            setRecoveryEmail(emailInput.trim());
+            const exists = (recoveryEmails || []).some(x => x.email.toLowerCase() === emailInput.toLowerCase().trim());
+            if (exists) { toast('E-mail já cadastrado'); return; }
+            setRecoveryEmails([...recoveryEmails, { id: 'e' + Date.now(), email: emailInput.trim() }]);
             setEmailInput('');
-            toast('E-mail de recuperação salvo!');
+            toast('E-mail adicionado!');
           }} className="flex gap-3">
-            <input type="email" placeholder="seu@email.com" value={emailInput} onChange={e => setEmailInput(e.target.value)} className={`flex-1 p-3 border rounded-lg font-bold text-sm outline-none ${darkMode ? 'bg-zinc-900 border-zinc-600 text-white placeholder-zinc-500 focus:border-white' : 'border-zinc-300 focus:border-black'}`} required />
-            <button type="submit" className="bg-black text-white font-bold py-3 px-6 rounded-lg uppercase tracking-wider hover:bg-zinc-800 transition-colors">Salvar</button>
+            <input type="email" placeholder="seu@gmail.com" value={emailInput} onChange={e => setEmailInput(e.target.value)} className={`flex-1 p-3 border rounded-lg font-bold text-sm outline-none ${darkMode ? 'bg-zinc-900 border-zinc-600 text-white placeholder-zinc-500 focus:border-white' : 'border-zinc-300 focus:border-black'}`} required />
+            <button type="submit" className="bg-black text-white font-bold py-3 px-6 rounded-lg uppercase tracking-wider hover:bg-zinc-800 transition-colors">Adicionar</button>
           </form>
+        </div>
+      </div>
+
+      {/* Configuração EmailJS */}
+      <div className="mt-8 mb-8">
+        <h3 className="text-lg font-black mb-6 text-black uppercase tracking-wider flex items-center gap-2">
+          <Mail className="w-6 h-6" /> Configuração de Envio de E-mail
+        </h3>
+        <div className={`rounded-2xl border shadow-sm p-6 ${darkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-300'}`}>
+          <div className={`border-l-4 p-4 rounded-lg mb-6 ${darkMode ? 'bg-yellow-900/20 border-yellow-500' : 'bg-yellow-50 border-yellow-400'}`}>
+            <p className={`text-sm font-bold uppercase mb-2 ${darkMode ? 'text-yellow-400' : 'text-yellow-700'}`}>⚙ Como configurar</p>
+            <ol className={`text-xs font-medium space-y-1 list-decimal list-inside ${darkMode ? 'text-yellow-300' : 'text-yellow-700'}`}>
+              <li>Acesse <strong>emailjs.com</strong> e crie uma conta gratuita</li>
+              <li>Adicione seu Gmail como serviço de e-mail (Email Services → Add New Service → Gmail)</li>
+              <li>Crie um template com as variáveis: <code>{'{{to_email}}'}</code>, <code>{'{{new_password}}'}</code>, <code>{'{{to_name}}'}</code></li>
+              <li>Copie o <strong>Service ID</strong>, <strong>Template ID</strong> e <strong>Public Key</strong> e cole abaixo</li>
+            </ol>
+          </div>
+          <div className="flex flex-col gap-3">
+            <input type="text" placeholder="Service ID" value={ejServiceId} onChange={e => setEjServiceId(e.target.value)} className={`p-3 border rounded-lg font-bold text-sm outline-none ${darkMode ? 'bg-zinc-900 border-zinc-600 text-white placeholder-zinc-500 focus:border-white' : 'border-zinc-300 focus:border-black'}`} />
+            <input type="text" placeholder="Template ID" value={ejTemplateId} onChange={e => setEjTemplateId(e.target.value)} className={`p-3 border rounded-lg font-bold text-sm outline-none ${darkMode ? 'bg-zinc-900 border-zinc-600 text-white placeholder-zinc-500 focus:border-white' : 'border-zinc-300 focus:border-black'}`} />
+            <input type="text" placeholder="Public Key" value={ejPublicKey} onChange={e => setEjPublicKey(e.target.value)} className={`p-3 border rounded-lg font-bold text-sm outline-none ${darkMode ? 'bg-zinc-900 border-zinc-600 text-white placeholder-zinc-500 focus:border-white' : 'border-zinc-300 focus:border-black'}`} />
+            <button
+              onClick={() => {
+                setEmailjsConfig({ serviceId: ejServiceId.trim(), templateId: ejTemplateId.trim(), publicKey: ejPublicKey.trim() });
+                toast('Configuração salva!');
+              }}
+              className="bg-black text-white font-bold py-3 rounded-lg uppercase tracking-wider hover:bg-zinc-800 transition-colors"
+            >
+              Salvar Configuração
+            </button>
+          </div>
         </div>
       </div>
 
