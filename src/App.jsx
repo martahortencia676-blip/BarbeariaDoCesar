@@ -13,7 +13,7 @@ import CouponsView from './pages/CouponsView';
 import PerformanceView from './pages/PerformanceView';
 import RodrigoPage from './pages/RodrigoPage';
 import LoginScreen from './components/LoginScreen.jsx';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogOut } from 'lucide-react';
 
 const SESSION_KEY = 'barbearia_session';
 const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 min de inatividade
@@ -134,8 +134,15 @@ export default function App() {
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
-          {userRole === 'cesar' && (
           <div className="flex flex-wrap items-center gap-2 ml-auto">
+            <button
+              onClick={() => { sessionStorage.removeItem(SESSION_KEY); setLoggedIn(false); setUserRole(null); }}
+              className="bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2 px-3 md:px-4 rounded-lg text-xs uppercase tracking-wider flex items-center gap-1"
+            >
+              <LogOut className="w-4 h-4" /> Sair
+            </button>
+          {userRole === 'cesar' && (
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setHideValues(v => !v)}
               className="bg-zinc-200 hover:bg-zinc-300 text-black font-bold py-2 px-3 md:px-4 rounded-lg text-xs uppercase tracking-wider"
@@ -150,6 +157,7 @@ export default function App() {
             </button>
           </div>
           )}
+          </div>
           {userRole === 'cesar' && showChangePassword && (
             <div className="w-full flex flex-wrap items-center gap-2 mt-2">
               <input
