@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { ClipboardList, Trash2, Pencil, Save, XCircle, Search } from 'lucide-react';
 import { toast } from '../components/Toast';
+import ConfirmModal from '../components/ConfirmModal';
 
 const PAYMENT_LABELS = { pix: 'PIX', credit: 'Cartão de Crédito', debit: 'Cartão de Débito', cash: 'Dinheiro' };
 
-export default function TransactionHistoryView({ transactions, setTransactions, customers, barbers, userRole, hideValues = false }) {
+export default function TransactionHistoryView({ transactions, setTransactions, customers, barbers, userRole, hideValues = false, loginLogs, setLoginLogs, cesarPassword }) {
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editPayment, setEditPayment] = useState('');
   const [editItems, setEditItems] = useState([]);
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null });
 
   const mask = v => hideValues ? '****' : v;
 
@@ -48,10 +50,16 @@ export default function TransactionHistoryView({ transactions, setTransactions, 
   };
 
   const handleDelete = (id) => {
-    if (confirm('Tem certeza que deseja excluir esta transação?')) {
-      setTransactions(transactions.filter(t => t.id !== id));
-      toast('Transação excluída');
+    setDeleteModal({ open: true, id });
+  };
+
+  const confirmDelete = () => {
+    setTransactions(transactions.filter(t => t.id !== deleteModal.id));
+    if (setLoginLogs) {
+      setLoginLogs(prev => [...prev, { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), role: userRole, action: 'delete_transaction', detail: `Transação #${deleteModal.id}`, timestamp: new Date() }]);
     }
+    toast('Transação excluída');
+    setDeleteModal({ open: false, id: null });
   };
 
   return (
@@ -181,6 +189,18 @@ export default function TransactionHistoryView({ transactions, setTransactions, 
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        open={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, id: null })}
+        onConfirm={confirmDelete}
+        title="Excluir Transação"
+        message="Tem certeza que deseja excluir esta transação? Essa ação não pode ser desfeita."
+        confirmText="Excluir"
+        type="danger"
+        requirePassword={userRole === 'cesar'}
+        passwordValue={cesarPassword}
+      />
     </div>
   );
 }

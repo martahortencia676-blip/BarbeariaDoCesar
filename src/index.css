@@ -16,6 +16,108 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ===== DARK MODE GLOBAL ===== */
+.dark body,
+.dark {
+  color-scheme: dark;
+}
+
+/* Backgrounds */
+.dark .bg-zinc-100 { background-color: #18181b !important; }
+.dark .bg-zinc-50 { background-color: #1f1f23 !important; }
+.dark .bg-white { background-color: #27272a !important; }
+.dark .bg-zinc-200 { background-color: #3f3f46 !important; }
+
+/* Text */
+.dark .text-black { color: #f4f4f5 !important; }
+.dark .text-zinc-900 { color: #f4f4f5 !important; }
+.dark .text-zinc-800 { color: #e4e4e7 !important; }
+.dark .text-zinc-700 { color: #d4d4d8 !important; }
+.dark .text-zinc-600 { color: #a1a1aa !important; }
+.dark .text-zinc-500 { color: #71717a !important; }
+
+/* Borders */
+.dark .border-zinc-200 { border-color: #3f3f46 !important; }
+.dark .border-zinc-300 { border-color: #3f3f46 !important; }
+.dark .border-black { border-color: #52525b !important; }
+
+/* Form inputs */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #27272a !important;
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+.dark input::placeholder,
+.dark select::placeholder,
+.dark textarea::placeholder {
+  color: #71717a !important;
+}
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #a1a1aa !important;
+}
+
+/* Hover states */
+.dark .hover\:bg-zinc-50:hover { background-color: #3f3f46 !important; }
+.dark .hover\:bg-zinc-100:hover { background-color: #3f3f46 !important; }
+.dark .hover\:bg-zinc-200:hover { background-color: #52525b !important; }
+.dark .hover\:bg-zinc-300:hover { background-color: #52525b !important; }
+.dark .hover\:border-black:hover { border-color: #71717a !important; }
+
+/* Buttons - keep black/white buttons as-is for contrast */
+.dark .bg-black { background-color: #f4f4f5 !important; color: #18181b !important; }
+.dark .bg-black .text-white,
+.dark .bg-black { color: #18181b !important; }
+.dark .hover\:bg-zinc-800:hover { background-color: #d4d4d8 !important; color: #18181b !important; }
+
+/* Cards & containers */
+.dark .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important; }
+.dark .shadow-md { box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important; }
+.dark .shadow-lg { box-shadow: 0 8px 16px rgba(0,0,0,0.4) !important; }
+
+/* Dashed borders */
+.dark .border-dashed { border-color: #3f3f46 !important; }
+
+/* Alert boxes */
+.dark .bg-red-50 { background-color: rgba(127, 29, 29, 0.15) !important; }
+.dark .bg-blue-50 { background-color: rgba(30, 58, 138, 0.15) !important; }
+.dark .bg-green-50 { background-color: rgba(20, 83, 45, 0.15) !important; }
+.dark .bg-yellow-50 { background-color: rgba(113, 63, 18, 0.15) !important; }
+.dark .bg-orange-50 { background-color: rgba(124, 45, 18, 0.15) !important; }
+.dark .bg-red-100 { background-color: rgba(127, 29, 29, 0.25) !important; }
+.dark .bg-blue-100 { background-color: rgba(30, 58, 138, 0.25) !important; }
+.dark .bg-green-100 { background-color: rgba(20, 83, 45, 0.25) !important; }
+
+/* Recharts (charts) */
+.dark .recharts-text { fill: #a1a1aa !important; }
+.dark .recharts-cartesian-grid line { stroke: #3f3f46 !important; }
+.dark .recharts-cartesian-axis-line { stroke: #3f3f46 !important; }
+.dark .recharts-cartesian-axis-tick-line { stroke: #3f3f46 !important; }
+
+/* Scrollbar */
+.dark ::-webkit-scrollbar { background: #18181b; }
+.dark ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+
+/* Comanda overlay mobile */
+.dark .bg-zinc-100.fixed { background-color: #18181b !important; }
+
+/* In-service appointment (black bg) - keep visible in dark mode */
+.dark .bg-black.text-white { 
+  background-color: #3f3f46 !important; 
+  color: #f4f4f5 !important; 
+}
+
+/* Sidebar stays dark always - reset overrides */
+nav.bg-black,
+.dark nav { 
+  /* sidebar keeps its own styling */
+}
+
+/* ===== ANIMATIONS ===== */
 @keyframes fade-in {
   from {
     opacity: 0;

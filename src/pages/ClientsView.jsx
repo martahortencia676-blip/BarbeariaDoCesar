@@ -3,11 +3,16 @@ import { Users, Plus, Trash2, Eye, Calendar, Phone, Mail, Gift, Pencil, Save, XC
 import { toast } from '../components/Toast';
 import { formatPhoneNumber, unformatPhoneNumber, calculateAge, isBirthdayToday, generateWhatsAppLink, getMonthCutCount } from '../utils/phoneAndDate';
 import { generateId, formatDate } from '../utils/helpers';
+import ConfirmModal, { AlertModal } from '../components/ConfirmModal';
 
 export default function ClientsView({
   customers,
   setCustomers,
-  transactions
+  transactions,
+  userRole,
+  loginLogs,
+  setLoginLogs,
+  cesarPassword
 }) {
   const [showNewClientForm, setShowNewClientForm] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState(null);
@@ -20,6 +25,8 @@ export default function ClientsView({
   const [newNotes, setNewNotes] = useState('');
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState({});
+  const [deleteModal, setDeleteModal] = useState({ open: false, clientId: null });
+  const [alertModal, setAlertModal] = useState({ open: false, message: '' });
 
   const handlePhoneChange = (e) => {
     const input = e.target.value;
@@ -28,11 +35,18 @@ export default function ClientsView({
   };
 
   const handleDeleteClient = (clientId) => {
-    if (confirm('Tem certeza que deseja deletar este cliente?')) {
-      setCustomers(customers.filter(c => c.id !== clientId));
-      setSelectedClientId(null);
-      toast('Cliente removido');
+    setDeleteModal({ open: true, clientId });
+  };
+
+  const confirmDeleteClient = () => {
+    const client = customers.find(c => c.id === deleteModal.clientId);
+    setCustomers(customers.filter(c => c.id !== deleteModal.clientId));
+    setSelectedClientId(null);
+    if (setLoginLogs) {
+      setLoginLogs(prev => [...prev, { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), role: userRole || 'cesar', action: 'delete_client', detail: `Cliente: ${client?.name || deleteModal.clientId}`, timestamp: new Date() }]);
     }
+    toast('Cliente removido');
+    setDeleteModal({ open: false, clientId: null });
   };
 
   const handleAddClient = (e) => {
@@ -55,7 +69,7 @@ export default function ClientsView({
     }
 
     if (errors.length > 0) {
-      alert(`Preencha os campos corretamente: ${errors.join(', ')}`);
+      setAlertModal({ open: true, message: `Preencha os campos corretamente: ${errors.join(', ')}` });
       return;
     }
 
@@ -373,6 +387,24 @@ export default function ClientsView({
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        open={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, clientId: null })}
+        onConfirm={confirmDeleteClient}
+        title="Excluir Cliente"
+        message="Tem certeza que deseja deletar este cliente? Todos os dados serão perdidos."
+        confirmText="Excluir"
+        type="danger"
+      />
+
+      <AlertModal
+        open={alertModal.open}
+        onClose={() => setAlertModal({ open: false, message: '' })}
+        title="Campos Inválidos"
+        message={alertModal.message}
+        type="warning"
+      />
     </div>
   );
 }

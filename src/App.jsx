@@ -309,6 +309,10 @@ export default function App() {
             customers={customers}
             setCustomers={setCustomers}
             transactions={transactions}
+            userRole={userRole}
+            loginLogs={loginLogs}
+            setLoginLogs={setLoginLogs}
+            cesarPassword={password}
           />
         )}
 
@@ -368,6 +372,9 @@ export default function App() {
             barbers={barbers}
             userRole={userRole}
             hideValues={hideValues}
+            loginLogs={loginLogs}
+            setLoginLogs={setLoginLogs}
+            cesarPassword={password}
           />
         )}
 
@@ -400,6 +407,9 @@ export default function App() {
             cesarPassword={password}
             emailjsConfig={emailjsConfig}
             setEmailjsConfig={setEmailjsConfig}
+            userRole={userRole}
+            loginLogs={loginLogs}
+            setLoginLogs={setLoginLogs}
           />
         )}
       </main>

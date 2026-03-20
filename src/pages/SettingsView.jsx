@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Scissors, Beer, Trash2, Cloud, Search, UserPlus, Users, Mail } from 'lucide-react';
 import { toast } from '../components/Toast';
 import { generateId } from '../utils/helpers';
+import ConfirmModal from '../components/ConfirmModal';
 
 export default function SettingsView({
   barbers,
@@ -26,7 +27,10 @@ export default function SettingsView({
   darkMode,
   cesarPassword,
   emailjsConfig,
-  setEmailjsConfig
+  setEmailjsConfig,
+  userRole,
+  loginLogs,
+  setLoginLogs
 }) {
   const [sName, setSName] = useState('');
   const [sPrice, setSPrice] = useState('');
@@ -43,6 +47,7 @@ export default function SettingsView({
   const [ejServiceId, setEjServiceId] = useState(emailjsConfig?.serviceId || '');
   const [ejTemplateId, setEjTemplateId] = useState(emailjsConfig?.templateId || '');
   const [ejPublicKey, setEjPublicKey] = useState(emailjsConfig?.publicKey || '');
+  const [cleanupModal, setCleanupModal] = useState(false);
 
   const generateBarberPDF = (barber) => {
     const bTxns = transactions.filter(t => (t.items || []).some(i => i.barberId === barber.id));
@@ -135,6 +140,9 @@ export default function SettingsView({
       return;
     }
     generateBarberPDF(deletingBarber);
+    if (setLoginLogs) {
+      setLoginLogs(prev => [...prev, { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), role: userRole || 'cesar', action: 'delete_barber', detail: `Barbeiro removido: ${deletingBarber.name}`, timestamp: new Date() }]);
+    }
     setBarbers(barbers.filter(x => x.id !== deletingBarber.id));
     toast(`${deletingBarber.name} removido. PDF de desempenho gerado.`);
     setDeletingBarber(null);
@@ -518,22 +526,36 @@ export default function SettingsView({
             <p className="text-sm text-red-700 font-medium">Essa ação apaga todos os dados operacionais (clientes, transações, agendamentos, cupons e fluxo manual). Os serviços e produtos serão mantidos.</p>
           </div>
           <button
-            onClick={() => {
-              if (confirm('Tem certeza que deseja apagar TODOS os dados operacionais? Essa ação não pode ser desfeita.')) {
-                setCustomers([]);
-                setTransactions([]);
-                setAppointments([]);
-                setCoupons([]);
-                setManualTransactions([]);
-                toast('Dados limpos com sucesso!');
-              }
-            }}
+            onClick={() => setCleanupModal(true)}
             className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg uppercase tracking-wider transition-colors"
           >
             Limpar Todos os Dados Operacionais
           </button>
         </div>
       </div>
+
+      <ConfirmModal
+        open={cleanupModal}
+        onClose={() => setCleanupModal(false)}
+        onConfirm={() => {
+          setCustomers([]);
+          setTransactions([]);
+          setAppointments([]);
+          setCoupons([]);
+          setManualTransactions([]);
+          if (setLoginLogs) {
+            setLoginLogs(prev => [...prev, { id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), role: userRole || 'cesar', action: 'clear_all_data', detail: 'Limpeza total de dados operacionais', timestamp: new Date() }]);
+          }
+          toast('Dados limpos com sucesso!');
+          setCleanupModal(false);
+        }}
+        title="Limpar Dados Operacionais"
+        message="Tem certeza que deseja apagar TODOS os dados operacionais (clientes, transações, agendamentos, cupons e fluxo manual)? Essa ação NÃO pode ser desfeita."
+        confirmText="Limpar Tudo"
+        type="danger"
+        requirePassword={true}
+        passwordValue={cesarPassword}
+      />
       </div>
     </div>
   );

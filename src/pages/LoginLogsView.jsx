@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { Shield, Clock, LogIn, LogOut as LogOutIcon } from 'lucide-react';
+import { Shield, Clock, LogIn, LogOut as LogOutIcon, Trash2, AlertTriangle } from 'lucide-react';
+
+const ACTION_LABELS = {
+  login: { label: 'Login', color: 'bg-green-100 text-green-700' },
+  logout: { label: 'Logout', color: 'bg-zinc-200 text-zinc-600' },
+  delete_transaction: { label: 'Excluiu Transação', color: 'bg-red-100 text-red-700' },
+  delete_client: { label: 'Excluiu Cliente', color: 'bg-red-100 text-red-700' },
+  delete_barber: { label: 'Removeu Barbeiro', color: 'bg-orange-100 text-orange-700' },
+  clear_all_data: { label: 'Limpou Dados', color: 'bg-red-200 text-red-800' },
+};
 
 export default function LoginLogsView({ loginLogs }) {
   const [filterMonth, setFilterMonth] = useState(new Date().getMonth());
@@ -152,6 +161,52 @@ export default function LoginLogsView({ loginLogs }) {
                     </tr>
                   ))
                 )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Registro de Ações (exclusões, limpezas) */}
+        <div className="bg-white rounded-2xl shadow-sm border border-zinc-300 p-6 mt-8">
+          <h3 className="font-black text-black mb-4 uppercase text-sm tracking-wider flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" /> Registro de Ações
+          </h3>
+          <p className="text-xs text-zinc-500 font-medium mb-4">Exclusões, limpezas e alterações importantes registradas pelo sistema.</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs md:text-sm">
+              <thead>
+                <tr className="bg-black text-white">
+                  <th className="p-3 font-black">Data/Hora</th>
+                  <th className="p-3 font-black">Usuário</th>
+                  <th className="p-3 font-black">Ação</th>
+                  <th className="p-3 font-black">Detalhe</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-200">
+                {(() => {
+                  const actionLogs = loginLogs
+                    .filter(l => l.action && !['login', 'logout'].includes(l.action))
+                    .filter(l => {
+                      const d = new Date(l.timestamp);
+                      return d.getMonth() === filterMonth && d.getFullYear() === filterYear;
+                    })
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                  if (actionLogs.length === 0) {
+                    return <tr><td colSpan={4} className="text-center py-8 font-bold text-zinc-400 uppercase">Nenhuma ação registrada neste mês</td></tr>;
+                  }
+                  return actionLogs.map((log, idx) => {
+                    const d = new Date(log.timestamp);
+                    const info = ACTION_LABELS[log.action] || { label: log.action, color: 'bg-zinc-100 text-zinc-600' };
+                    return (
+                      <tr key={idx} className="hover:bg-zinc-50">
+                        <td className="p-3 font-medium">{d.toLocaleDateString('pt-BR')} {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</td>
+                        <td className="p-3 font-bold uppercase">{log.role === 'cesar' ? 'César' : 'Rodrigo'}</td>
+                        <td className="p-3"><span className={`font-bold text-xs px-2 py-1 rounded ${info.color}`}>{info.label}</span></td>
+                        <td className="p-3 font-medium text-zinc-600">{log.detail || '—'}</td>
+                      </tr>
+                    );
+                  });
+                })()}
               </tbody>
             </table>
           </div>

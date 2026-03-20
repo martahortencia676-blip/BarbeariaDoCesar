@@ -82,7 +82,7 @@ export default function POSView({
     if (type === 'product') {
       const productData = products.find(p => p.id === item.id);
       if (productData.stock <= 0) {
-        alert("Estoque esgotado para " + item.name);
+        toast("Estoque esgotado para " + item.name);
         return;
       }
       setProducts(products.map(p => p.id === item.id ? { ...p, stock: p.stock - 1 } : p));
